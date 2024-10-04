@@ -1,0 +1,8 @@
+pandas
+keras
+matplotlib
+numpy
+scipy
+torch
+torchvision
+lightning
