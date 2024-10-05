@@ -1,13 +1,11 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as f
+import torch.nn.functional as F
 from torch.optim import Adam
 import lightning as L
-from torch.utils.data import (
-    TensorDataset,
-    DataLoader)
+import os
 
-SEED: int = 42
+SEED: int = int(os.getenv('GLOBAL_SEED', L.seed_everything()))
 
 class LSTMModel(L.LightningModule):
 
@@ -21,7 +19,7 @@ class LSTMModel(L.LightningModule):
         dropout_rate: float=0.2,
         learning_rate: float=1e-3,
         num_epochs: int=100,
-        criterion: nn.Module = f.binary_cross_entropy):
+        criterion: nn.Module = F.binary_cross_entropy):
         """ Initialize LSTM unit """
 
         super(LSTMModel, self).__init__()
@@ -51,17 +49,23 @@ class LSTMModel(L.LightningModule):
                             hidden_size=hidden_size,
                             num_layers=num_layers,
                             dropout=dropout_rate,
-                            batch_first=True)
+                            bidirectional=False,
+                            proj_size = 0,
+                            batch_first = True,
+                            bias=True)
         # linear = fully connected layer
         self.linear = nn.Linear(hidden_size, 1)
 
     def forward(self, input: torch.Tensor):
         """ Forward pass
-        lstm_out = (batch_size, sequence_length, hidden_size)
+        input = tensor with shape (batch_size, sequence_length, input_size)
+        lstm_out = tensor with shape (batch_size, sequence_length, hidden_size)
         """
         lstm_out, _ = self.lstm(input)
         # lstm_out has the short-term memories for all inputs. We make a prediction based on the last one.
-        prediction = self.linear(lstm_out[:, -1, :])
+        linear_out = self.linear(lstm_out[:, -1, :])
+        # transform solution in probability
+        prediction = torch.sigmoid(linear_out)
         return prediction
 
     def configure_optimizers(self, learning_rate: float | None = None):
@@ -70,25 +74,22 @@ class LSTMModel(L.LightningModule):
         return Adam(self.parameters(), lr=learning_rate)
 
     def training_step(self, batch: [torch.Tensor, torch.Tensor], batch_idx: int):
-        input_i, label_i = batch # input_i is the input data, label_i is the target data
+        input_i, target_i = batch # input_i is the input data, target_i is the target data
         output_i = self.forward(input_i)
-        loss = self.criterion(torch.sigmoid(output_i), label_i)
-        result = L.TrainResult(loss)
-        result.log('train_loss', loss)
-        return result
+        loss = self.criterion(output_i, target_i)
+        self.log('train_loss', loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
+        return loss
 
     def validation_step(self, batch: [torch.Tensor, torch.Tensor], batch_idx: int):
-        input_i, label_i = batch
+        input_i, target_i = batch
         output_i = self.forward(input_i)
-        loss = self.criterion(torch.sigmoid(output_i), label_i)
-        result = L.EvalResult(loss)
-        result.log('val_loss', loss)
-        return result
+        loss = self.criterion(output_i, target_i)
+        self.log('val_loss', loss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
+        return loss
 
     def test_step(self, batch: [torch.Tensor, torch.Tensor], batch_idx: int):
-        input_i, label_i = batch
+        input_i, target_i = batch
         output_i = self.forward(input_i)
-        loss = self.criterion(torch.sigmoid(output_i), label_i)
-        result = L.EvalResult(loss)
-        result.log('test_loss', loss)
-        return result
+        loss = self.criterion(output_i, target_i)
+        self.log('test_loss', loss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
+        return loss
