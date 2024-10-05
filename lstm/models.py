@@ -21,7 +21,7 @@ class LSTMModel(L.LightningModule):
         dropout_rate: float=0.2,
         learning_rate: float=1e-3,
         num_epochs: int=100,
-        criterion: nn.Module = f.mse_loss):
+        criterion: nn.Module = f.binary_cross_entropy):
         """ Initialize LSTM unit """
 
         super(LSTMModel, self).__init__()
@@ -72,7 +72,7 @@ class LSTMModel(L.LightningModule):
     def training_step(self, batch: [torch.Tensor, torch.Tensor], batch_idx: int):
         input_i, label_i = batch # input_i is the input data, label_i is the target data
         output_i = self.forward(input_i)
-        loss = self.criterion(output_i, label_i)
+        loss = self.criterion(torch.sigmoid(output_i), label_i)
         result = L.TrainResult(loss)
         result.log('train_loss', loss)
         return result
@@ -80,7 +80,7 @@ class LSTMModel(L.LightningModule):
     def validation_step(self, batch: [torch.Tensor, torch.Tensor], batch_idx: int):
         input_i, label_i = batch
         output_i = self.forward(input_i)
-        loss = self.criterion(output_i, label_i)
+        loss = self.criterion(torch.sigmoid(output_i), label_i)
         result = L.EvalResult(loss)
         result.log('val_loss', loss)
         return result
@@ -88,7 +88,7 @@ class LSTMModel(L.LightningModule):
     def test_step(self, batch: [torch.Tensor, torch.Tensor], batch_idx: int):
         input_i, label_i = batch
         output_i = self.forward(input_i)
-        loss = self.criterion(output_i, label_i)
+        loss = self.criterion(torch.sigmoid(output_i), label_i)
         result = L.EvalResult(loss)
         result.log('test_loss', loss)
         return result
