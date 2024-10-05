@@ -13,3 +13,6 @@ data/**/**.csv
 # Ignore IDE files
 .vscode/
 .idea/
+
+# Ignore logs
+logs/**.log
