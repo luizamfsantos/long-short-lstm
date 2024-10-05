@@ -1,6 +1,15 @@
 # Don't commit sensitive data
 secrets.json
+config.yaml
+
 # Files too big to be kept in repo, consider cloud storage 
-data/
+data/**/**.csv
 # Don't commit __pycache__ 
 **/__pycache__
+
+# Don't commit Docker related files
+.dockerignore
+
+# Ignore IDE files
+.vscode/
+.idea/
