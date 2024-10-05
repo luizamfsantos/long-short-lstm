@@ -50,3 +50,4 @@
 |- docker-compose.yml              # Docker Compose configuration
 |- .dockerignore                   # Files to be ignored by Docker
 |- .gitignore                      # Files to be ignored by Git
+|- template.py                    # Template for new Python scripts
