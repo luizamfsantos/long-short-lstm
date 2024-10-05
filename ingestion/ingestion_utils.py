@@ -77,22 +77,32 @@ def get_fundamentalist_data(
             '&cabecalho_excel=modo1'\
             '&relat_alias_automatico=cmd_alias_01'
     URL = quote(URL)
-    return send_request(URL, auth['username'], auth['password'])
+    return send_request(URL, username, password)
 
 def get_market_data(
     start_time: str, 
     end_time: str,
     ticker: str, 
     username: str, 
-    password: str
+    password: str,
+    flag_ajusted: int = 1,
+    page: int = 1
 ) -> dict:
     request_time_format = '%d%m%Y'
     start_time = format_request_time(start_time, request_time_format)
     end_time = format_request_time(end_time, request_time_format)
-    URL = 'HistoricoCotacaoAcao001-{x}-{data_ini}-{data_fim}-{flag_ajusta}-{pagina}'
-    return send_request(URL, auth['username'], auth['password'])
+    URL = f'HistoricoCotacaoAcao001-{ticker}-{start_time}-{end_time}-{flag_ajusted}-{page}'
+    return send_request(URL, username, password)
 
 def format_request_time(time_string: str, output_format: str) -> str:
     return pd.to_datetime(time_string).strftime(output_format)
 
-    
+if __name__ == '__main__':
+    pass
+    # # example usage
+    # config = get_config('ingestion_scripts/secrets.json')
+    # stock_list = get_stock_list('data/stock_list.csv')
+    # end_time = pd.Timestamp.now()
+    # start_time = end_time - pd.Timedelta(days=30)
+    # start_time, end_time = start_time.strftime('%Y-%m-%d'), end_time.strftime('%Y-%m-%d')
+    # response = get_fundamentalist_data(start_time=start_time, end_time=end_time, ticker='PETR4', username=config['username'],password=config['password'])
