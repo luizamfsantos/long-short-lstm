@@ -64,7 +64,9 @@ class LSTMModel(L.LightningModule):
         prediction = self.linear(lstm_out[:, -1, :])
         return prediction
 
-    def configure_optimizers(self, learning_rate: float = self.learning_rate):
+    def configure_optimizers(self, learning_rate: float | None = None):
+        if not learning_rate:
+            learning_rate = self.learning_rate
         return Adam(self.parameters(), lr=learning_rate)
 
     def training_step(self, batch: [torch.Tensor, torch.Tensor], batch_idx: int):
