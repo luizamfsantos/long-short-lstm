@@ -5,7 +5,7 @@ import logging
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='[%(asctime)s:%(levelname)s]: %(message)s')
 
-project_name = 'tableDecoder'
+project_name = 'long-short-lstm'
 
 list_of_files = [
     'data/raw/.gitkeep',
