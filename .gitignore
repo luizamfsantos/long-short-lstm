@@ -1,6 +1,6 @@
 # Don't commit sensitive data
 secrets.json
-config.yaml
+credentials.yaml
 
 # Files too big to be kept in repo, consider cloud storage 
 data/**/**.csv
