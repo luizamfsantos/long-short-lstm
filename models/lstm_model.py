@@ -22,7 +22,7 @@ class LSTMModel(L.LightningModule):
         criterion: nn.Module = F.binary_cross_entropy):
         """ Initialize LSTM unit """
 
-        super(LSTMModel, self).__init__()
+        super().__init__()
 
         L.seed_everything(seed=SEED)
 
