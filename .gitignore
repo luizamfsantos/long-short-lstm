@@ -4,6 +4,8 @@ credentials.yml
 
 # Files too big to be kept in repo, consider cloud storage 
 data/**/**.csv
+data/**/**.parquet
+
 # Don't commit __pycache__ 
 **/__pycache__
 
