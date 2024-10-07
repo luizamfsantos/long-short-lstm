@@ -4,19 +4,23 @@ import os
 from pathlib import Path
 import json
 from urllib.parse import quote, unquote
-
+import yaml
 
 def get_config(
     config_path: str | None = None
 ) -> dict:
     if not config_path:
-        config_path = Path(__file__).parent / 'secrets.json'
+        config_path = Path(__file__).parent.parent / 'config' / 'credentials.yml'
     
     if not os.path.isfile(config_path):
         raise ValueError('Missing config file or path incorrect.')
 
-    with open(config_path, 'r') as config_file:
-        config = json.load(config_file)
+    if os.path.splitext(config_path)[-1] == '.json':
+        with open(config_path, 'r') as config_file:
+            config = json.load(config_file)
+    elif os.path.splitext(config_path)[-1] in ['.yml', '.yaml']:
+        with open(config_path, 'r') as config_file:
+            config = yaml.safe_load(config_file)
 
     return config
 
