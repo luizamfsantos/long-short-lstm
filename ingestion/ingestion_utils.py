@@ -21,6 +21,8 @@ def get_config(
     elif os.path.splitext(config_path)[-1] in ['.yml', '.yaml']:
         with open(config_path, 'r') as config_file:
             config = yaml.safe_load(config_file)
+    else:
+        raise ValueError('Function not configured for non json/yaml files')
 
     return config
 
