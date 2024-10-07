@@ -5,11 +5,11 @@
 ```{lua}
 |- data
   |-- raw/                         # Store raw, unprocessed data
-    |-- market_data.csv
-    |-- fundamental_data.csv
+    |-- market_data.parquet
+    |-- fundamental_data.parquet
   |-- processed/                   # Store preprocessed data (ready for modeling)
-    |-- train_data.csv
-    |-- test_data.csv
+    |-- train_data.parquet
+    |-- test_data.parquet
   |-- stock_list.csv               # List of stocks to be used in the model
 |- ingestion
   |-- get_data.py                  # Script to retrieve data from API/source
