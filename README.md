@@ -2,6 +2,7 @@
 
 
 # Repository structure
+```{lua}
 |- data
   |-- raw/                         # Store raw, unprocessed data
     |-- market_data.csv
@@ -40,7 +41,7 @@
   |-- ingestion.log
   |-- model_training.log
   |-- trading_simulation.log
-|- scripts                         # Additional utility scripts
+|- scripts                         # Additional utility scripts  
   |-- run_training.sh              # Shell script to run training
   |-- run_tests.sh                 # Shell script to run tests
   |-- run_simulation.sh            # Shell script to run trading simulation
@@ -51,3 +52,4 @@
 |- .dockerignore                   # Files to be ignored by Docker
 |- .gitignore                      # Files to be ignored by Git
 |- template.py                    # Template for new Python scripts
+```
