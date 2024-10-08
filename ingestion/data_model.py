@@ -79,8 +79,8 @@ class DataModel(BaseModel):
     def parse_table_data(v):
         df = pd.DataFrame(v).T
         df = df.rename(columns=v['lin0'])
-        df.columns = df.columns.str.replace('\n', ' ').str.strip().str.replace(' ', '_').str.lower(
-        ).str.replace(r'r$', 'reais', regex=True).str.replace('(', '').str.replace(')', '')
+        df.columns = df.columns.str.replace('\n', ' ').str.strip().str.replace(' ', '_')\
+            .str.lower().str.replace(r'r$', 'reais', regex=True).str.replace('(', '').str.replace(')', '')
         df.columns = [unidecode(col) for col in df.columns]
         df = df.drop(index='lin0')
         df = df.replace(',', '.', regex=True)
