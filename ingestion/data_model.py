@@ -69,7 +69,7 @@ class FundamentalistMetadata(BaseMetadata):
 
 
 class TableData(RootModel):
-    root: dict[str, dict]
+    root: dict[str, dict[str, dict]]
 
     @field_validator('root')
     def parse_table(cls, v):
@@ -80,16 +80,16 @@ class TableData(RootModel):
         df = pd.DataFrame(v).T
         df = df.rename(columns=v['lin0'])
         df.columns = df.columns.str.replace('\n', ' ').str.strip().str.replace(' ', '_')\
-            .str.lower().str.replace(r'r$', 'reais', regex=True).str.replace('(', '').str.replace(')', '')
+            .str.lower().str.replace(r'r\$', 'reais', regex=True).str.replace('(', '')\
+            .str.replace(')', '').str.replace('%', 'percent')
         df.columns = [unidecode(col) for col in df.columns]
         df = df.drop(index='lin0')
         df = df.replace(',', '.', regex=True)
         df['data'] = pd.to_datetime(df['data'], format='%d/%m/%Y')
         df = df.set_index('data')
-        df = df.replace(['nd', 'DRE', 'DRN'], pd.NA)
+        df = df.replace(['nd'], pd.NA)
         df = df.dropna(how='all', axis=1).dropna(how='all')
-        return df
-
+        return df.to_dict()
 
 class MarketApiResponse(BaseModel):
     meta: MarketMetadata
