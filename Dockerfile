@@ -1,15 +1,15 @@
 FROM python:3.12-slim-bookworm
 
-WORKDIR /app
+RUN mkdir -p /usr/src/
+
+WORKDIR /usr/src/
 
 COPY requirements.txt .
 
-# Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy all the files from the project’s root to the working directory
 COPY . .
 
-EXPOSE 8080
+VOLUME /data
 
-CMD ["scripts/run_simulation.sh"]
+CMD ["./scripts/run_simulation.sh"]
