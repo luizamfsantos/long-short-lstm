@@ -4,6 +4,10 @@ import sys
 import logging
 import pandas as pd
 from pathlib import Path, PosixPath
+import pyarrow as pa
+import pyarrow.parquet as pq
+import pyarrow.dataset as ds
+import pyarrow.compute as pc
 from ingestion.ingestion_utils import (
     get_config,
     get_fundamentalist_data,
@@ -25,16 +29,21 @@ def pipeline(
     stock_list: list[str] | None = None,
     config_path: str | None = None,
     save_raw_data: bool = False,
-    path_to_save_raw_data: str | PosixPath = Path(__file__).parent.parent / 'data' / 'raw',
+    path_to_save_raw_data: str | PosixPath = Path(
+        __file__).parent.parent / 'data' / 'raw',
+    path_to_save_combined_data: str | PosixPath = Path(
+        __file__).parent.parent / 'data' / 'raw_combined'
 ) -> None:
     # Get authentication
     config = get_config(config_path)
     # Get list of stocks being ingested
     stock_list = stock_list or get_stock_list()
     # Loop over stocks
+    market_data_list = []
+    fundamentalist_data_list = []
     for ticker in stock_list:
         logger.info(f'Processing data for {ticker}')
-        process_raw_data(
+        market_data, fundamentalist_data = process_raw_data(
             start_time,
             end_time,
             ticker,
@@ -42,7 +51,64 @@ def pipeline(
             save_raw_data,
             path_to_save_raw_data
         )
+        if market_data and fundamentalist_data:
+            market_data = market_data.dict()['tables']
+            market_data['ticker'] = ticker
+            market_data_list.append(market_data)
+            fundamentalist_data = fundamentalist_data.dict()['tables']
+            fundamentalist_data['ticker'] = ticker
+            fundamentalist_data_list.append(fundamentalist_data)
+    # Extract data from the API response
+    market_data_list = extract_data_from_api_response(market_data_list)
+    fundamentalist_data_list = extract_data_from_api_response(fundamentalist_data_list)
+    # Combine data by type
+    market_data = combine_data(market_data_list)
+    fundamentalist_data = combine_data(fundamentalist_data_list)
+    # Save combined data
+    save_combined_data(market_data, path_to_save_combined_data, 'market')
+    save_combined_data(fundamentalist_data, path_to_save_combined_data, 'fundamentalist')
 
+
+def extract_data_from_api_response(data_list: list[dict]) -> list[dict]:
+    """ example: market_data_list = [{'tab0':{'column1':{'2023':'val1','2024':'val2'}},'ticker':'PETR4'},{'tab0':{'column1':{'2023':'val1','2024':'val2'}},'ticker':'VALE3'}] """
+    def extract_data(data: dict) -> dict | None:
+        ticker = data['ticker']
+        stock_data = []
+        for k, v in data.items():
+            if k != 'ticker':
+                stock_data.append(pd.DataFrame(v))
+        if not stock_data:
+            return None
+        stock_df = pd.concat(stock_data)
+        if stock_df.empty:
+            return None
+        stock_df['ticker'] = ticker
+        return stock_df.to_dict()
+    # Extract data from each stock table
+    data_list = [extract_data(data) for data in data_list]
+    # Filter out None values
+    data_list = [data for data in data_list if data]
+    return data_list
+
+def combine_data(data_list: list[dict]) -> dict:
+    df = pd.concat([pd.DataFrame(data) for data in data_list], join='outer')
+    return df.to_dict()
+    
+
+def save_combined_data(data: dict, path_to_save_combined_data: str | PosixPath, data_type: str) -> None:
+    # transform data into pyarrow table
+    table = pa.Table.from_pydict(data)
+    # create year and month columns
+    table = table.append_column('year', pc.year(table['date'])) # TODO: check if this is the right column for both market and fundamentalist data
+    table = table.append_column('month', pc.month(table['date'])) # TODO: check if this is the right column for both market and fundamentalist data
+    # save table to parquet
+    now = pd.Timestamp.now().strftime('%Y%m%d%H%M%S%f')
+    basename = f'{data_type}_data_updated_{now}_' + '{i}.parquet'
+    ds.write_dataset(table, format_path(path_to_save_combined_data),
+    format = 'parquet', basename_template=basename,
+    partitioning=['year', 'month'],
+    existing_data_behavior= 'overwrite_or_ignore')
+    
 
 def process_raw_data(
     start_time: str,
@@ -51,7 +117,7 @@ def process_raw_data(
     config: dict,
     save_raw_data: bool,
     path_to_save_raw_data: str | PosixPath
-) -> [MarketApiResponse, FundamentalistApiResponse] | None:
+) -> [MarketApiResponse | None, FundamentalistApiResponse | None]:
     # Get data
     arguments = {'start_time': start_time, 
                 'end_time': end_time, 
@@ -68,14 +134,14 @@ def process_raw_data(
     except Exception as e:
         logger.error(f'Data for {ticker} is not in the correct format.'\
             f' {arguments=}. Error: {e}')
-        return None
+        return None, None
     # Save raw data
     if save_raw_data:
         arguments.update({'market_data': market_data, 'fundamentalist_data': fundamentalist_data})
-        save_data(**arguments)
+        save_data_by_stock(**arguments)
     return market_data, fundamentalist_data
 
-def save_data(
+def save_data_by_stock(
     ticker: str,
     start_time: str,
     end_time: str,
@@ -86,13 +152,6 @@ def save_data(
 ) -> None:
     def format_time(time: str) -> str:
         return pd.to_datetime(time).strftime('%Y%m%d')
-    def format_path(path: str | PosixPath) -> Path:
-        if isinstance(path, PosixPath):
-            return path
-        elif isinstance(path, str):
-            return Path(path)
-        else:
-            raise ValueError('Path not in a valid format')
 
     filename = "{ticker}_{start_time}_{end_time}.json"\
                 .format(ticker=ticker, 
@@ -107,6 +166,13 @@ def save_data(
     except Exception as e:
         logger.error(f'Error saving raw data for {ticker}. {e}')
 
+def format_path(path: str | PosixPath) -> Path:
+        if isinstance(path, PosixPath):
+            return path
+        elif isinstance(path, str):
+            return Path(path)
+        else:
+            raise ValueError('Path not in a valid format')
 
 def parse_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
