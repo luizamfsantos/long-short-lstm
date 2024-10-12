@@ -4,9 +4,14 @@
 # Repository structure
 ```{lua}
 |- data
-  |-- raw/                         # Store raw, unprocessed data
-    |-- market_data.parquet
-    |-- fundamental_data.parquet
+  |-- raw/                         # Store raw, unprocessed data by stock
+    |-- PETR4.json
+    |-- VALE3.json
+  |-- raw_combined/                         # Store raw, unprocessed data by date
+    |-- market_data_2023.parquet
+    |-- market_data_2024.parquet
+    |-- fundamental_data_2023.parquet
+    |-- fundamental_data_2024.parquet
   |-- processed/                   # Store preprocessed data (ready for modeling)
     |-- train_data.parquet
     |-- test_data.parquet

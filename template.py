@@ -9,12 +9,8 @@ project_name = 'long-short-lstm'
 
 list_of_files = [
     'data/raw/.gitkeep',
-    'data/raw/market_data.parquet',
-    'data/raw/fundamental_data.parquet',
+    'data/raw_combined/.gitkeep',
     'data/processed/.gitkeep',
-    'data/processed/train_data.parquet',
-    'data/processed/test_data.parquet',
-    'data/stock_list.csv',
     'ingestion/get_data.py',
     'ingestion/preprocess.py',
     'ingestion/ingestion_utils.py',
