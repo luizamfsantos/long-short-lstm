@@ -27,35 +27,85 @@ def pipeline(
     save_raw_data: bool = False,
     path_to_save_raw_data: str | PosixPath = Path(__file__).parent.parent / 'data' / 'raw',
 ) -> None:
+    # Get authentication
     config = get_config(config_path)
+    # Get list of stocks being ingested
     stock_list = stock_list or get_stock_list()
+    # Loop over stocks
     for ticker in stock_list:
-        # Get data
-        arguments = {'start_time': start_time, 'end_time': end_time, 'ticker': ticker, 'username': config['username'], 'password': config['password']}
-        market_data = get_market_data(**arguments)
-        fundamentalist_data = get_fundamentalist_data(**arguments)
-        try:
-            # Ensure data is in the correct format
-            market_data = MarketApiResponse(**market_data)
-            fundamentalist_data = FundamentalistApiResponse(
-                **fundamentalist_data)
-        except Exception as e:
-            logger.error(f'Data for {ticker} is not in the correct format. Error: {e}')
-            continue
-        # Save raw data
-        if save_raw_data:
-            filename = "{ticker}_{start_time}_{end_time}.json"\
+        logger.info(f'Processing data for {ticker}')
+        process_raw_data(
+            start_time,
+            end_time,
+            ticker,
+            config,
+            save_raw_data,
+            path_to_save_raw_data
+        )
+
+
+def process_raw_data(
+    start_time: str,
+    end_time: str,
+    ticker: str,
+    config: dict,
+    save_raw_data: bool,
+    path_to_save_raw_data: str | PosixPath
+) -> [MarketApiResponse, FundamentalistApiResponse] | None:
+    # Get data
+    arguments = {'start_time': start_time, 
+                'end_time': end_time, 
+                'ticker': ticker, 
+                'username': config['username'], 
+                'password': config['password'],
+                'path_to_save_raw_data': path_to_save_raw_data}
+    market_data = get_market_data(**arguments)
+    fundamentalist_data = get_fundamentalist_data(**arguments)
+    # Ensure data is in the correct format
+    try:
+        market_data = MarketApiResponse(**market_data)
+        fundamentalist_data = FundamentalistApiResponse(**fundamentalist_data)
+    except Exception as e:
+        logger.error(f'Data for {ticker} is not in the correct format.'\
+            f' {arguments=}. Error: {e}')
+        return None
+    # Save raw data
+    if save_raw_data:
+        arguments.update({'market_data': market_data, 'fundamentalist_data': fundamentalist_data})
+        save_data(**arguments)
+    return market_data, fundamentalist_data
+
+def save_data(
+    ticker: str,
+    start_time: str,
+    end_time: str,
+    path_to_save_raw_data: str | PosixPath,
+    market_data: MarketApiResponse,
+    fundamentalist_data: FundamentalistApiResponse,
+    **kwargs
+) -> None:
+    def format_time(time: str) -> str:
+        return pd.to_datetime(time).strftime('%Y%m%d')
+    def format_path(path: str | PosixPath) -> Path:
+        if isinstance(path, PosixPath):
+            return path
+        elif isinstance(path, str):
+            return Path(path)
+        else:
+            raise ValueError('Path not in a valid format')
+
+    filename = "{ticker}_{start_time}_{end_time}.json"\
                 .format(ticker=ticker, 
-                start_time=pd.to_datetime(start_time).strftime('%Y%m%d'), 
-                end_time=pd.to_datetime(end_time).strftime('%Y%m%d'))
-            if isinstance(path_to_save_raw_data, PosixPath):
-                new_path_to_save_raw_data = path_to_save_raw_data / filename 
-            else:
-                new_path_to_save_raw_data = Path(path_to_save_raw_data) / filename
-            with open(new_path_to_save_raw_data, 'w') as f:
-                # doing this way because the serialization of model_dump is not working for timestamp
-                json.dump({'market_data': json.loads(market_data.model_dump_json()), 
-                'fundamentalist_data': json.loads(fundamentalist_data.model_dump_json())}, f, indent=4)
+                start_time=format_time(start_time), 
+                end_time=format_time(end_time))
+    try:
+        new_path_to_save_raw_data = format_path(path_to_save_raw_data) / filename 
+        with open(new_path_to_save_raw_data, 'w') as f:
+            # doing this way because the serialization of model_dump is not working for timestamp
+            json.dump({'market_data': json.loads(market_data.model_dump_json()), 
+            'fundamentalist_data': json.loads(fundamentalist_data.model_dump_json())}, f, indent=4)
+    except Exception as e:
+        logger.error(f'Error saving raw data for {ticker}. {e}')
 
 
 def parse_arguments() -> argparse.Namespace:

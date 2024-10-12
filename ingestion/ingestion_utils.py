@@ -61,7 +61,8 @@ def get_fundamentalist_data(
     end_time: str,
     ticker: str, 
     username: str, 
-    password: str
+    password: str,
+    **kwargs
 ) -> dict:
     request_time_format = '%d/%m/%Y'
     start_time = format_request_time(start_time, request_time_format)
@@ -92,7 +93,8 @@ def get_market_data(
     username: str, 
     password: str,
     flag_ajusted: int = 1,
-    page: int = 1
+    page: int = 1,
+    **kwargs
 ) -> dict:
     request_time_format = '%d%m%Y'
     start_time = format_request_time(start_time, request_time_format)
