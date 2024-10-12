@@ -7,7 +7,7 @@
   |-- raw/                         # Store raw, unprocessed data by stock
     |-- PETR4.json
     |-- VALE3.json
-  |-- raw_combined/                         # Store raw, unprocessed data by date
+  |-- raw_combined/                # Store raw, unprocessed data by date
     |-- market_data_2023.parquet
     |-- market_data_2024.parquet
     |-- fundamental_data_2023.parquet
@@ -56,5 +56,5 @@
 |- docker-compose.yml              # Docker Compose configuration
 |- .dockerignore                   # Files to be ignored by Docker
 |- .gitignore                      # Files to be ignored by Git
-|- template.py                    # Template for new Python scripts
+|- template.py                     # Template for new Python scripts
 ```
