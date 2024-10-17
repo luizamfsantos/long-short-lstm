@@ -52,7 +52,7 @@ def pipeline(
             path_to_save_raw_data
         )
         if market_data and fundamentalist_data:
-            market_data = market_data.dict()['tables']
+            market_data = market_data.dict()['tables'] # dict
             market_data['ticker'] = ticker
             market_data_list.append(market_data)
             fundamentalist_data = fundamentalist_data.dict()['tables']
@@ -76,7 +76,9 @@ def extract_data_from_api_response(data_list: list[dict]) -> list[dict]:
         stock_data = []
         for k, v in data.items():
             if k != 'ticker':
-                stock_data.append(pd.DataFrame(v))
+                # stock_data.append(pd.DataFrame(v))
+                for table_name, table in v.items():
+                    stock_data.append(pd.DataFrame(table))
         if not stock_data:
             return None
         stock_df = pd.concat(stock_data)
@@ -96,11 +98,15 @@ def combine_data(data_list: list[dict]) -> dict:
     
 
 def save_combined_data(data: dict, path_to_save_combined_data: str | PosixPath, data_type: str) -> None:
+    # transform data into pandas
+    df = pd.DataFrame(data)
+    df = df.reset_index(names='date')
+    df['date'] = pd.to_datetime(df['date'])
     # transform data into pyarrow table
-    table = pa.Table.from_pydict(data)
+    table = pa.Table.from_pandas(df) # TODO: fix, it's transforming everything into strings
     # create year and month columns
-    table = table.append_column('year', pc.year(table['date'])) # TODO: check if this is the right column for both market and fundamentalist data
-    table = table.append_column('month', pc.month(table['date'])) # TODO: check if this is the right column for both market and fundamentalist data
+    table = table.append_column('year', pc.year(table['date'])) 
+    table = table.append_column('month', pc.month(table['date'])) 
     # save table to parquet
     now = pd.Timestamp.now().strftime('%Y%m%d%H%M%S%f')
     basename = f'{data_type}_data_updated_{now}_' + '{i}.parquet'
