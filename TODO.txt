@@ -1,0 +1,55 @@
+# TO DO LIST
+
+Big Buckets
+A. [ ] Get data
+B. [ ] Create model
+C. [ ] Train model
+D. [ ] Test model
+E. [ ] Implement strategy
+F. [ ] Write article
+
+
+A. Get data bucket
+[ X ] Write function to request data -> It needs testing
+[+/-] Get stock list -> It needs to check which is available through the API
+[   ] Data storage -> raw, cleaned, model ready
+[ X ] Decide input features (OHLC, volume, technical indicators)
+[   ] Normalize/scale data for the model
+[   ] Prepare data to use sliding window
+[   ] Implement sliding window to the data
+
+B. Create model bucket
+[+/-] Define LSTM architecture (number of layers, units per layer) -> It needs testing
+[   ] Add dropout layers (to prevent overfitting)
+[   ] Define activation functions
+[+/-] Compile the model (choose optimizer and loss function) -> It needs testing
+
+C. Train model bucket
+[   ] Split data into training and validation sets for sliding windows
+[   ] Implement early stopping/callbacks
+[   ] Train on historical data
+[   ] Save training checkpoints
+[   ] Log performance metrics during training (loss, accuracy)
+[   ] Fine-tune model hyperparameters (number of epochs, batch side)
+
+D. Test model bucket
+[   ] Evaluate on test set (ensure no data leakage)
+[   ] Visualize prediction vs. actuals
+[   ] Measure performance (accuracy, MSE)
+[   ] Calculate trading returns based on model output
+[   ] Assess model robustness
+
+E. Implement strategy bucket
+[   ] Define long short trading logic based on model predictions
+[   ] Simulate trades with trading program
+[   ] Fine-tune strategy parameters (stop loss, take profit levels)
+[   ] Measure overall strategy performance (Sharpe ratio, max drawdown)
+
+F. Write article bucket
+[+/-] Introduction to LSTM in stock trading
+[+/-] Write literature review
+[+/-] Explain data source process
+[+/-] Explain model creation and key architectural choices
+[   ] Discuss model training challenges and tuning process
+[   ] Share results of testing, and strategy performance
+[   ] Conclusion with insights and next steps

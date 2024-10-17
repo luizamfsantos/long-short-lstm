@@ -52,7 +52,7 @@ def pipeline(
             path_to_save_raw_data
         )
         if market_data and fundamentalist_data:
-            market_data = market_data.dict()['tables'] # dict
+            market_data = market_data.dict()['tables']  # dict
             market_data['ticker'] = ticker
             market_data_list.append(market_data)
             fundamentalist_data = fundamentalist_data.dict()['tables']
@@ -60,13 +60,17 @@ def pipeline(
             fundamentalist_data_list.append(fundamentalist_data)
     # Extract data from the API response
     market_data_list = extract_data_from_api_response(market_data_list)
-    fundamentalist_data_list = extract_data_from_api_response(fundamentalist_data_list)
+    fundamentalist_data_list = extract_data_from_api_response(
+        fundamentalist_data_list)
     # Combine data by type
     market_data = combine_data(market_data_list)
     fundamentalist_data = combine_data(fundamentalist_data_list)
     # Save combined data
     save_combined_data(market_data, path_to_save_combined_data, 'market')
-    save_combined_data(fundamentalist_data, path_to_save_combined_data, 'fundamentalist')
+    save_combined_data(
+        fundamentalist_data,
+        path_to_save_combined_data, 
+        'fundamentalist')
 
 
 def extract_data_from_api_response(data_list: list[dict]) -> list[dict]:
@@ -92,29 +96,34 @@ def extract_data_from_api_response(data_list: list[dict]) -> list[dict]:
     data_list = [data for data in data_list if data]
     return data_list
 
+
 def combine_data(data_list: list[dict]) -> dict:
     df = pd.concat([pd.DataFrame(data) for data in data_list], join='outer')
     return df.to_dict()
-    
+
 
 def save_combined_data(data: dict, path_to_save_combined_data: str | PosixPath, data_type: str) -> None:
     # transform data into pandas
     df = pd.DataFrame(data)
+    # turn index into column and adjust type
     df = df.reset_index(names='date')
     df['date'] = pd.to_datetime(df['date'])
     # transform data into pyarrow table
-    table = pa.Table.from_pandas(df) # TODO: fix, it's transforming everything into strings
+    # TODO: fix, it's transforming everything into strings
+    table = pa.Table.from_pandas(df)
     # create year and month columns
-    table = table.append_column('year', pc.year(table['date'])) 
-    table = table.append_column('month', pc.month(table['date'])) 
+    table = table.append_column('year', pc.year(table['date']))
+    table = table.append_column('month', pc.month(table['date']))
     # save table to parquet
     now = pd.Timestamp.now().strftime('%Y%m%d%H%M%S%f')
     basename = f'{data_type}_data_updated_{now}_' + '{i}.parquet'
-    ds.write_dataset(table, format_path(path_to_save_combined_data),
-    format = 'parquet', basename_template=basename,
-    partitioning=['year', 'month'],
-    existing_data_behavior= 'overwrite_or_ignore')
-    
+    ds.write_dataset(table, 
+                    format_path(path_to_save_combined_data),
+                     format='parquet', 
+                     basename_template=basename,
+                     partitioning=['year', 'month'],
+                     existing_data_behavior='overwrite_or_ignore')
+
 
 def process_raw_data(
     start_time: str,
@@ -125,12 +134,12 @@ def process_raw_data(
     path_to_save_raw_data: str | PosixPath
 ) -> [MarketApiResponse | None, FundamentalistApiResponse | None]:
     # Get data
-    arguments = {'start_time': start_time, 
-                'end_time': end_time, 
-                'ticker': ticker, 
-                'username': config['username'], 
-                'password': config['password'],
-                'path_to_save_raw_data': path_to_save_raw_data}
+    arguments = {'start_time': start_time,
+                 'end_time': end_time,
+                 'ticker': ticker,
+                 'username': config['username'],
+                 'password': config['password'],
+                 'path_to_save_raw_data': path_to_save_raw_data}
     market_data = get_market_data(**arguments)
     fundamentalist_data = get_fundamentalist_data(**arguments)
     # Ensure data is in the correct format
@@ -138,14 +147,16 @@ def process_raw_data(
         market_data = MarketApiResponse(**market_data)
         fundamentalist_data = FundamentalistApiResponse(**fundamentalist_data)
     except Exception as e:
-        logger.error(f'Data for {ticker} is not in the correct format.'\
-            f' {arguments=}. Error: {e}')
+        logger.error(f'Data for {ticker} is not in the correct format.'
+                     f' {arguments=}. Error: {e}')
         return None, None
     # Save raw data
     if save_raw_data:
-        arguments.update({'market_data': market_data, 'fundamentalist_data': fundamentalist_data})
+        arguments.update({'market_data': market_data,
+                         'fundamentalist_data': fundamentalist_data})
         save_data_by_stock(**arguments)
     return market_data, fundamentalist_data
+
 
 def save_data_by_stock(
     ticker: str,
@@ -160,25 +171,28 @@ def save_data_by_stock(
         return pd.to_datetime(time).strftime('%Y%m%d')
 
     filename = "{ticker}_{start_time}_{end_time}.json"\
-                .format(ticker=ticker, 
-                start_time=format_time(start_time), 
+        .format(ticker=ticker,
+                start_time=format_time(start_time),
                 end_time=format_time(end_time))
     try:
-        new_path_to_save_raw_data = format_path(path_to_save_raw_data) / filename 
+        new_path_to_save_raw_data = format_path(
+            path_to_save_raw_data) / filename
         with open(new_path_to_save_raw_data, 'w') as f:
             # doing this way because the serialization of model_dump is not working for timestamp
-            json.dump({'market_data': json.loads(market_data.model_dump_json()), 
-            'fundamentalist_data': json.loads(fundamentalist_data.model_dump_json())}, f, indent=4)
+            json.dump({'market_data': json.loads(market_data.model_dump_json()),
+                       'fundamentalist_data': json.loads(fundamentalist_data.model_dump_json())}, f, indent=4)
     except Exception as e:
         logger.error(f'Error saving raw data for {ticker}. {e}')
 
+
 def format_path(path: str | PosixPath) -> Path:
-        if isinstance(path, PosixPath):
-            return path
-        elif isinstance(path, str):
-            return Path(path)
-        else:
-            raise ValueError('Path not in a valid format')
+    if isinstance(path, PosixPath):
+        return path
+    elif isinstance(path, str):
+        return Path(path)
+    else:
+        raise ValueError('Path not in a valid format')
+
 
 def parse_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
