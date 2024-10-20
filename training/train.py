@@ -1,5 +1,6 @@
 import torch
 from models.lstm_model import LSTMModel
+import torch.nn.functional as F
 from lightning.pytorch import Trainer
 from training.train_utils import get_config, get_logger
 
@@ -8,7 +9,16 @@ def main():
     logger = get_logger()
     logger.info(f'Using torch {torch.__version__}')
     config = get_config() # get hyperparameters from config.yaml
-    lstm = LSTMModel(config['INPUT_SIZE'], config['HIDDEN_SIZE'])
+    lstm = LSTMModel(
+        input_size=config['INPUT_SIZE'], 
+        hidden_size=config['HIDDEN_SIZE'],
+        sequence_length=config.get('SEQUENCE_LENGTH', 5),
+        batch_size=config.get('BATCH_SIZE', 1),
+        num_layers=config.get('NUM_LAYERS', 2),
+        dropout_rate=config.get('DROPOUT_RATE', 0.2),
+        learning_rate=config.get('LEARNING_RATE', 1e-3),
+        num_epochs=config.get('NUM_EPOCHS', 100),
+        criterion=config.get('CRITERION', F.binary_cross_entropy))
     trainer = Trainer(
         devices="auto",
         accelerator="auto",
