@@ -12,4 +12,4 @@ COPY . .
 
 VOLUME /data
 
-CMD ["./scripts/run_simulation.sh"]
+CMD ["/bin/bash", "run_simulation.sh"]
