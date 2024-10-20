@@ -24,6 +24,8 @@
   |-- lstm_model.py                # Define LSTM architecture
   |-- data_preparation.py          # Prepare data for model training
   |-- model_utils.py               # Helper functions for models (loading, saving models, etc.)
+|- libs
+  |-- quantstats-0.0.63           # Modified version of QuantStats library
 |- training
   |-- train.py                     # Train the model
   |-- evaluate.py                  # Evaluate model performance (backtesting, validation)
