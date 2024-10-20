@@ -20,30 +20,25 @@ class LSTMModel(L.LightningModule):
         learning_rate: float=1e-3,
         num_epochs: int=100,
         criterion: nn.Module = F.binary_cross_entropy):
-        """ Initialize LSTM unit """
+        """ Initialize LSTM unit 
+        
+        Args:
+        input_size: number of features in the data
+        hidden_size: size of output
+        sequence_length: number of time steps in the data
+        batch_size: number of samples per batch
+        num_layers: number of LSTM layers
+        dropout_rate: rate in which to drop connections
+        learning_rate: rate at which the model learns
+        num_epochs: number of times to iterate over the dataset
+        criterion: loss function
+        """
 
         super().__init__()
+        self.save_hyperparameters()
 
         L.seed_everything(seed=SEED)
 
-        # input_size = number of features in the data
-        self.input_size=input_size # number of features in the data
-        # hidden_size = size of output
-        self.hidden_size=hidden_size
-        # sequence_length = number of time steps in the data
-        self.sequence_length=sequence_length
-        # batch_size = number of samples per batch
-        self.batch_size=batch_size
-        # num_layers = number of LSTM layers
-        self.num_layers=num_layers
-        # dropout_rate = rate in which to drop connections
-        self.dropout_rate=dropout_rate
-        # learning_rate = rate at which the model learns
-        self.learning_rate=learning_rate
-        # num_epochs = number of times to iterate over the dataset
-        self.num_epochs=num_epochs
-        # criterion = loss function
-        self.criterion=criterion
         # lstm = long short-term memory unit
         self.lstm = nn.LSTM(input_size=input_size, 
                             hidden_size=hidden_size,
@@ -70,26 +65,26 @@ class LSTMModel(L.LightningModule):
 
     def configure_optimizers(self, learning_rate: float | None = None):
         if not learning_rate:
-            learning_rate = self.learning_rate
+            learning_rate = self.hparams.learning_rate
         return Adam(self.parameters(), lr=learning_rate)
 
     def training_step(self, batch: [torch.Tensor, torch.Tensor], batch_idx: int):
         input_i, target_i = batch # input_i is the input data, target_i is the target data
         output_i = self.forward(input_i)
-        loss = self.criterion(output_i, target_i)
+        loss = self.hparams.criterion(output_i, target_i)
         self.log('train_loss', loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
         return loss
 
     def validation_step(self, batch: [torch.Tensor, torch.Tensor], batch_idx: int):
         input_i, target_i = batch
         output_i = self.forward(input_i)
-        loss = self.criterion(output_i, target_i)
+        loss = self.hparams.criterion(output_i, target_i)
         self.log('val_loss', loss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
         return loss
 
     def test_step(self, batch: [torch.Tensor, torch.Tensor], batch_idx: int):
         input_i, target_i = batch
         output_i = self.forward(input_i)
-        loss = self.criterion(output_i, target_i)
+        loss = self.hparams.criterion(output_i, target_i)
         self.log('test_loss', loss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
         return loss

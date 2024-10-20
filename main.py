@@ -2,10 +2,16 @@ import pandas as pd
 import quantstats as qs
 from trading.long_short_strategy import LongShortStrategy
 from simulator.strategy_simulator import strategy_simulator
+from models.lstm_model import LSTMModel
 
 def main():
     # TODO: load test data
     data = []
+
+    # TODO: load last model checkpoint
+    model = LSTMModel.load_from_checkpoint('checkpoints/lstm_model.ckpt')
+    model.eval()
+    forecast = model.predict(data)
 
     # TODO: create object of LongShortStrategy
     strategy = LongShortStrategy()
