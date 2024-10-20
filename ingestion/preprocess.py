@@ -149,3 +149,56 @@ def convert_to_tensor_v2(data_generator: Iterator[pa.RecordBatch]) -> tuple:
         torch.save(tensor, 'data/tensor.pt')
         torch.save(target, 'data/target.pt')
     return tensor, target
+
+
+def convert_to_tensor_v4(data_generator: Iterator[pa.RecordBatch], batch_size: int = 1000) -> tuple:
+    """ Convert the data generator to tensors in batches, 
+    saving intermediate results to disk.
+    Returns the paths to the saved tensor files. """
+    ticker_idx = {}
+    timestamp_idx = {}
+    feature_names = None
+    batch_counter = 0
+    tensor_path = 'data/tensor_batches'
+    target_path = 'data/target_batches'
+    os.makedirs(tensor_path, exist_ok=True)
+    os.makedirs(target_path, exist_ok=True)
+    for batch in data_generator:
+        batch_df = batch.to_pandas()
+        if feature_names is None:
+            feature_names = [col for col in batch_df.columns if col not in ['date', 'ticker', 'target']]
+        for _, row in batch_df.iterrows():
+            ticker = row['ticker']
+            timestamp = row['date']
+            if ticker not in ticker_idx:
+                ticker_idx[ticker] = len(ticker_idx)
+            if timestamp not in timestamp_idx:
+                timestamp_idx[timestamp] = len(timestamp_idx)
+        
+        # Create batch tensors
+        batch_tensor = torch.zeros(len(ticker_idx), len(timestamp_idx), len(feature_names))
+        batch_target = torch.zeros(len(ticker_idx), len(timestamp_idx), 1)
+        for _, row in batch_df.iterrows():
+            ticker_index = ticker_idx[row['ticker']]
+            timestamp_index = timestamp_idx[row['date']]
+            batch_tensor[ticker_index, timestamp_index, :] = torch.tensor(row[feature_names].values)
+            batch_target[ticker_index, timestamp_index, 0] = row['target']
+        # Save tensors to disk
+        torch.save(batch_tensor, f'{tensor_path}/tensor_{batch_counter}.pt')
+        torch.save(batch_target, f'{target_path}/target_{batch_counter}.pt')
+        batch_counter += 1
+
+        # Save metadata to disk
+        metadata = {
+            'ticker_idx': ticker_idx,
+            'timestamp_idx': timestamp_idx,
+            'feature_names': feature_names,
+            'num_batches': batch_counter
+        }
+        torch.save(metadata, 'data/metadata.pt')
+
+        # Clear memory
+        del batch_tensor
+        del batch_target
+        del batch_df
+    return tensor_path, target_path
