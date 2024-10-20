@@ -29,7 +29,7 @@ def read_data(
     folder_path: str | list[str], 
     data_type: str | None = None, 
     batch_size: int | None = 1000
-    ) -> Iterator[pa.RecordBatch] | ds.Dataset:
+    ) -> Iterator[pa.RecordBatch] | ds.Dataset | None:
     """ Read the parquet files from the data/raw_combined folder and return a generator 
     to iterate over the data. """
     if isinstance(folder_path, list):
