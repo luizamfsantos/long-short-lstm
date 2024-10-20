@@ -87,6 +87,8 @@ def extract_data_from_api_response(data_list: list[dict]) -> list[dict]:
         if stock_df.empty:
             return None
         stock_df['ticker'] = ticker
+        # Clean up column names by removing the stock ticker prefix
+        stock_df.columns = stock_df.columns.str.replace(f'{ticker.lower()}_', '')
         return stock_df.to_dict()
     # Extract data from each stock table
     data_list = [extract_data(data) for data in data_list]
