@@ -6,12 +6,15 @@ import pyarrow.parquet as pq
 import pyarrow.dataset as ds
 from typing import Iterator
 from pathlib import Path
+import torch
 from ingestion.ingestion_utils import get_logger
 
 # Step 1: Sort the dataframe by both date and ticker so that we can easily map values to the tensor.
 # Step 2: Create a dictionary of tickers and their corresponding indices.
 # Step 3: Iterate through the dataframe and create a tensor where each row corresponds to a ticker and each column represents the features for a specific timestamp.
 # Step 4: Create a tensor for the target variable.
+# the tensor X will have the shape [number_tickers, number_timestamps, feature_vector] 
+# the tensor y will have the shape [number_tickers, number_timestamps, 1]
 
 logger = get_logger('preprocessing')
 
@@ -79,6 +82,70 @@ def calculate_target_variable(df: pd.DataFrame, return_column: str = 'variacaope
     df['target'] = df['target'].astype('int8')
 
 
+def convert_to_tensor(df: pd.DataFrame) -> tuple:
+    """ Convert the dataframe to a tensor.
+    The tensor will have the shape [number_tickers, number_timestamps, feature_vector] """
+    # Step 1: Sort the dataframe by both date and ticker so that we can easily map values to the tensor.
+    df = df.sort_values(by=['date', 'ticker'])
+    # Step 2: Create a dictionary of tickers and their corresponding indices.
+    tickers = df['ticker'].unique()
+    ticker_indices = {ticker: i for i, ticker in enumerate(tickers)}
+    # Step 3: Iterate through the dataframe 
+    # and create a tensor where each row corresponds to a ticker 
+    # and each column represents the features for a specific timestamp.
+    tensor = []
+    for date, group in df.groupby('date'):
+        tensor_row = []
+        for _, row in group.iterrows():
+            ticker_index = ticker_indices[row['ticker']]
+            tensor_row.append(row.drop(['date', 'ticker']).values)
+        tensor.append(tensor_row)
+    # Step 4: Create a tensor for the target variable.
+    target = df['target'].values
+    return tensor, target
 
 
-
+def convert_to_tensor_v2(data_generator: Iterator[pa.RecordBatch]) -> tuple:
+    """ Convert the data generator to a tensor.
+    The tensor will have the shape [number_tickers, number_timestamps, feature_vector] """
+    # Step 1: Sort the dataframe by both date and ticker so that we can easily map values to the tensor.
+    # Step 2: Create a dictionary of tickers and their corresponding indices.
+    # Step 3: Iterate through the dataframe and create a tensor where each row corresponds to a ticker and each column represents the features for a specific timestamp.
+    # Step 4: Create a tensor for the target variable.
+    # Initialize empty dictionaries to track unique tickers and timestamps
+    ticker_idx = {}
+    timestamp_idx = {}
+    # Set an initial index counter for both tickers and timestamps
+    ticker_counter = 0
+    timestamp_counter = 0
+    for batch in data_generator:
+        batch_df = batch.to_pandas()
+        # Iterate through the rows in the batch
+        for _, row in batch_df.iterrows():
+            # Check if the ticker is already in the dictionary
+            if row['ticker'] not in ticker_idx:
+                # If not, add the ticker to the dictionary and increment the counter
+                ticker_idx[row['ticker']] = ticker_counter
+                ticker_counter += 1
+            # Check if the timestamp is already in the dictionary
+            if row['date'] not in timestamp_idx:
+                # If not, add the timestamp to the dictionary and increment the counter
+                timestamp_idx[row['date']] = timestamp_counter
+                timestamp_counter += 1
+        # Initialize an empty tensor to store the data
+        tensor = torch.zeros(ticker_counter, timestamp_counter, len(batch_df.columns) - 2)
+        # Initialize an empty tensor to store the target variable
+        target = torch.zeros(ticker_counter, timestamp_counter, 1)
+        # Iterate through the rows in the batch
+        for _, row in batch_df.iterrows():
+            # Get the index of the ticker and timestamp
+            ticker_index = ticker_idx[row['ticker']]
+            timestamp_index = timestamp_idx[row['date']]
+            # Add the data to the tensor
+            tensor[ticker_index, timestamp_index, :] = torch.tensor(row.drop(['date', 'ticker', 'target']).values)
+            # Add the target variable to the target tensor
+            target[ticker_index, timestamp_index, 0] = row['target']
+        # Save the tensors to disk
+        torch.save(tensor, 'data/tensor.pt')
+        torch.save(target, 'data/target.pt')
+    return tensor, target
