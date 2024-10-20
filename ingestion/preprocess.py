@@ -1,8 +1,4 @@
 #!/bin/python
-# this script will be used to preprocess the whole data
-# attention that to avoid data leakage, the test data will be normalized 
-# using the train data statistics. be careful to not use the test data statistics
-# in the training process
 import os
 import pandas as pd
 import pyarrow as pa
@@ -20,10 +16,6 @@ def calculate_target_variable(df: pd.DataFrame, column_name: str) -> pd.DataFram
     if the stock price will go up or down. This function will calculate the target
     variable based on the stock price."""
     df['target'] = (df[column_name] - df[column_name].shift(1)) > 0
-
-def calculate_returns(df: pd.DataFrame, column_name: str) -> pd.DataFrame:
-    """ Calculate the returns of the stock price. """
-    df['returns'] = df[column_name].pct_change()
 
 def read_data(
     folder_path: str | list[str], 
@@ -67,13 +59,18 @@ def read_data(
         return dataset
     return dataset.to_batches(batch_size=batch_size)
 
-def normalize_data(df: pd.DataFrame, train_stats: pd.DataFrame) -> pd.DataFrame:
-    """ Normalize the test data using the train data statistics. """
-    return (df - train_stats['mean']) / train_stats['std']
-
-def get_train_stats(train_data: pd.DataFrame) -> pd.DataFrame:
-    """ Calculate the mean and standard deviation of the train data. """
-    return train_data.describe().loc[['mean', 'std']]
+def convert_datatype(df: pd.DataFrame) -> pd.DataFrame:
+    """ Convert the data types of the columns.
+    Ticker should be object,
+    Date should be datetime,
+    Everything else should be float64 """
+    df['ticker'] = df['ticker'].astype('object')
+    df['date'] = pd.to_datetime(df['date'])
+    for column in df.columns:
+        if column not in ['ticker', 'date']:
+            df[column] = pd.to_numeric(df[column], errors='coerce')
+    df = df.dropna(how='all', axis=1)
+    return df
 
 def preprocess(
     input_path: str | list[str],
@@ -92,3 +89,6 @@ def preprocess(
     # Normalize the data
     data_normalized = normalize_data(data, train_stats)
     # TODO: Save the normalized data
+
+
+

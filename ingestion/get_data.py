@@ -97,22 +97,21 @@ def extract_data_from_api_response(data_list: list[dict]) -> list[dict]:
     return data_list
 
 
-def combine_data(data_list: list[dict]) -> dict:
-    df = pd.concat([pd.DataFrame(data) for data in data_list],
+def combine_data(data_list: list[dict]) -> pd.DataFrame:
+    data_list = [pd.DataFrame(data) for data in data_list]
+    df = pd.concat([data for data in data_list if not data.empty],
                    join='outer')
-    return df.to_dict()
+    # turn the index into a column
+    df = df.reset_index(names='date')
+    df['date'] = pd.to_datetime(df['date'])
+    return df
 
 
 def save_combined_data(
-    data: dict, 
+    df: pd.DataFrame, 
     path_to_save_combined_data: str | PosixPath, 
     data_type: str
 ) -> None:
-    # transform data into pandas
-    df = pd.DataFrame(data)
-    # turn index into column and adjust type
-    df = df.reset_index(names='date')
-    df['date'] = pd.to_datetime(df['date'])
     # transform data into pyarrow table
     # TODO: currently it's transforming everything into strings
     table = pa.Table.from_pandas(df)
