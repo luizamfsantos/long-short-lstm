@@ -96,8 +96,8 @@ def convert_to_tensor(data_generator: Iterator[pa.RecordBatch], batch_size: int 
     timestamp_idx = {}
     feature_names = None
     batch_counter = 0
-    tensor_path = 'data/tensor_batches'
-    target_path = 'data/target_batches'
+    tensor_path = 'data/processed/tensor_batches'
+    target_path = 'data/processed/target_batches'
     os.makedirs(tensor_path, exist_ok=True)
     os.makedirs(target_path, exist_ok=True)
     for batch in data_generator:
@@ -135,7 +135,7 @@ def convert_to_tensor(data_generator: Iterator[pa.RecordBatch], batch_size: int 
             'feature_names': feature_names,
             'num_batches': batch_counter
         }
-        torch.save(metadata, 'data/metadata.pt')
+        torch.save(metadata, 'data/processed/metadata.pt')
 
         # Clear memory
         del batch_tensor
