@@ -10,4 +10,4 @@ end_date=$(date +%Y%m%d)
 python -m ingestion.get_data -s $start_date -e $end_date --save_raw_data
 
 # Zip the raw json files
-find test-data -type f -name "*.json" | zip -m raw_data.zip -@
+find data/raw -type f -name "*.json" | zip -m data/raw/raw_data.zip -@
