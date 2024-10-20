@@ -8,3 +8,5 @@ pyarrow
 pyyaml
 requests
 pydantic
+IPython
+./libs/quantstats-0.0.63
