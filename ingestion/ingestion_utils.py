@@ -5,6 +5,7 @@ from pathlib import Path
 import json
 from urllib.parse import quote, unquote
 import yaml
+import logging
 
 def get_config(
     config_path: str | None = None
@@ -25,6 +26,34 @@ def get_config(
         raise ValueError('Function not configured for non json/yaml files')
 
     return config
+
+def get_logger(logger_name='ingestion', debug=False):
+    # Ensure the logs directory exists
+    os.makedirs('logs', exist_ok=True)
+    
+    # Create a custom logger
+    logger = logging.getLogger(logger_name)
+    
+    # Set the default logging level
+    logger.setLevel(logging.INFO)
+    if debug:
+        logger.setLevel(logging.DEBUG)
+    
+    # Create handlers
+    c_handler = logging.StreamHandler()
+    f_handler = logging.FileHandler('logs/ingestion.log')
+    
+    # Create formatters and add them to handlers
+    c_format = logging.Formatter('[%(asctime)s:%(levelname)s]: %(message)s')
+    f_format = logging.Formatter('[%(asctime)s:%(levelname)s]: %(message)s')
+    c_handler.setFormatter(c_format)
+    f_handler.setFormatter(f_format)
+    
+    # Add handlers to the logger
+    logger.addHandler(c_handler)
+    logger.addHandler(f_handler)
+    
+    return logger
 
 
 def get_stock_list(
