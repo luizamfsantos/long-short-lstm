@@ -4,6 +4,7 @@ scipy
 torch
 torchvision
 lightning
+lightning[extra]
 pyarrow
 pyyaml
 requests
