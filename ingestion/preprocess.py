@@ -38,7 +38,7 @@ def read_data(
         if data_type not in ['market', 'fundamentalist']:
             raise ValueError('data_type should be either market or fundamentalist')
         folder_path = Path(folder_path)
-        file_list = [folder_path / file for file in os.listdir(folder_path) if data_type in file]
+        file_list = list(folder_path.glob(f'**/*{data_type}*.parquet'))
         if file_list:
             dataset = read_data(file_list, batch_size=None)
         else:
