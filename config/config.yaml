@@ -1,0 +1,3 @@
+LSTM:
+  INPUT_SIZE: 1 # the number of features in the input data
+  HIDDEN_SIZE: 1 # the number of features in the hidden state
