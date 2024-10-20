@@ -34,6 +34,9 @@
 |- simulator
     |-- strategy_interface.py      # Interface for trading strategies
     |-- strategy_simulator.py      # Trading simulator
+|- results
+  |-- ret_port.parquet            # Store returns of the portfolio
+  |-- weights_db.parquet          # Store weights of the portfolio
 |- tests                           # Unit tests and validation scripts
   |-- test_ingestion.py            # Test data ingestion functions
   |-- test_model.py                # Test model-related code (training, evaluation, etc.)

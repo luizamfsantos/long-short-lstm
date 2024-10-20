@@ -25,6 +25,7 @@ list_of_files = [
     'trading/long_short_strategy.py',
     'simulator/strategy_interface.py',
     'simulator/strategy_simulator.py',
+    'results/.gitkeep',
     'tests/test_ingestion.py',
     'tests/test_model.py',
     'tests/test_trading.py',
