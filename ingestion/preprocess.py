@@ -29,7 +29,7 @@ def read_data(
     folder_path: str | list[str], 
     data_type: str | None = None, 
     batch_size: int | None = 1000
-    ) -> Iterator[pa.RecordBatch]:
+    ) -> Iterator[pa.RecordBatch] | ds.Dataset:
     """ Read the parquet files from the data/raw_combined folder and return a generator 
     to iterate over the data. """
     if isinstance(folder_path, list):
@@ -47,7 +47,6 @@ def read_data(
     else:
         market_dataset = read_data(folder_path, data_type='market', batch_size=None)
         fundamentalist_dataset = read_data(folder_path, data_type='fundamentalist', batch_size=None)
-        # Align schemas and merge the datasets
         if market_dataset and fundamentalist_dataset:
             dataset = market_dataset.join(fundamentalist_dataset,
                                           keys=['date', 'ticker'],
