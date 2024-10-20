@@ -1,7 +1,7 @@
 from ingestion.get_data import pipeline, extract_data_from_api_response, combine_data
 import os
 
-def test_pipeline():
+def test_save_raw_data():
     pipeline('2021-01-01', '2022-01-01', stock_list=['PETR4', 'VALE3'], config_path='config/credentials.yml', save_raw_data=True, path_to_save_raw_data='data/raw')
     file_list = ['data/raw/PETR4_20210101_20220101.json', 'data/raw/VALE3_20210101_20220101.json']
     for file in file_list:
@@ -43,7 +43,11 @@ def test_combine_data():
     combined_data = combine_data(market_data)
     print(combined_data)
 
+def test_pipeline():
+    pipeline('2024-01-01', '2024-10-01', stock_list=['PETR4', 'VALE3'], config_path='config/credentials.yml', save_raw_data=False)
+
 if __name__ == '__main__':
-    #test_pipeline()
+    #test_save_raw_data()
     #test_extract_data_from_api_response()
-    test_combine_data()
+    #test_combine_data()
+    test_pipeline()

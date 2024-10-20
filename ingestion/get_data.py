@@ -80,9 +80,7 @@ def extract_data_from_api_response(data_list: list[dict]) -> list[dict]:
         stock_data = []
         for k, v in data.items():
             if k != 'ticker':
-                # stock_data.append(pd.DataFrame(v))
-                for table_name, table in v.items():
-                    stock_data.append(pd.DataFrame(table))
+                stock_data.append(pd.DataFrame(v))
         if not stock_data:
             return None
         stock_df = pd.concat(stock_data)
@@ -98,18 +96,23 @@ def extract_data_from_api_response(data_list: list[dict]) -> list[dict]:
 
 
 def combine_data(data_list: list[dict]) -> dict:
-    df = pd.concat([pd.DataFrame(data) for data in data_list], join='outer')
+    df = pd.concat([pd.DataFrame(data) for data in data_list],
+                   join='outer')
     return df.to_dict()
 
 
-def save_combined_data(data: dict, path_to_save_combined_data: str | PosixPath, data_type: str) -> None:
+def save_combined_data(
+    data: dict, 
+    path_to_save_combined_data: str | PosixPath, 
+    data_type: str
+) -> None:
     # transform data into pandas
     df = pd.DataFrame(data)
     # turn index into column and adjust type
     df = df.reset_index(names='date')
     df['date'] = pd.to_datetime(df['date'])
     # transform data into pyarrow table
-    # TODO: fix, it's transforming everything into strings
+    # TODO: currently it's transforming everything into strings
     table = pa.Table.from_pandas(df)
     # create year and month columns
     table = table.append_column('year', pc.year(table['date']))
@@ -179,8 +182,10 @@ def save_data_by_stock(
             path_to_save_raw_data) / filename
         with open(new_path_to_save_raw_data, 'w') as f:
             # doing this way because the serialization of model_dump is not working for timestamp
-            json.dump({'market_data': json.loads(market_data.model_dump_json()),
-                       'fundamentalist_data': json.loads(fundamentalist_data.model_dump_json())}, f, indent=4)
+            json.dump({'market_data': json.loads(
+                market_data.model_dump_json()),
+                'fundamentalist_data': json.loads(
+                fundamentalist_data.model_dump_json())}, f, indent=4)
     except Exception as e:
         logger.error(f'Error saving raw data for {ticker}. {e}')
 
