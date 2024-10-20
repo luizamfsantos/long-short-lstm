@@ -19,6 +19,7 @@ def main():
         learning_rate=config.get('LEARNING_RATE', 1e-3),
         num_epochs=config.get('NUM_EPOCHS', 100),
         criterion=config.get('CRITERION', F.binary_cross_entropy))
+    logger.info(f'Model initialized with hyperparameters: {lstm.hparams}')
     trainer = Trainer(
         devices="auto",
         accelerator="auto",
