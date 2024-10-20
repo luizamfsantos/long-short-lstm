@@ -17,7 +17,8 @@ class LSTMModel(L.LightningModule):
         dropout_rate: float=0.2,
         learning_rate: float=1e-3,
         num_epochs: int=100,
-        criterion: nn.Module = F.binary_cross_entropy):
+        criterion: nn.Module = F.binary_cross_entropy,
+        seed: int = os.environ.get('SEED', 42)):
         """ Initialize LSTM unit 
         
         Args:
@@ -35,7 +36,6 @@ class LSTMModel(L.LightningModule):
         super().__init__()
         self.save_hyperparameters()
 
-        seed = os.environ.get('SEED', 42)
         L.seed_everything(seed)
 
         # lstm = long short-term memory unit
@@ -49,6 +49,8 @@ class LSTMModel(L.LightningModule):
                             bias=True)
         # linear = fully connected layer
         self.linear = nn.Linear(hidden_size, 1)
+        # activation function: transform the output into a probability
+        self.activation = torch.sigmoid
 
     def forward(self, input: torch.Tensor):
         """ Forward pass
@@ -59,7 +61,7 @@ class LSTMModel(L.LightningModule):
         # lstm_out has the short-term memories for all inputs. We make a prediction based on the last one.
         linear_out = self.linear(lstm_out[:, -1, :])
         # transform solution in probability
-        prediction = torch.sigmoid(linear_out)
+        prediction = self.activation(linear_out)
         return prediction
 
     def configure_optimizers(self, learning_rate: float | None = None):
