@@ -80,7 +80,7 @@ def preprocess(
     output_path: str,
     test: bool = False):
     # Get data
-    data = ...
+    data = read_data(input_path) # TODO: modify to read in batches
     # Convert prices to returns
     calculate_returns(data, 'price') # TODO: change the column name
     # Calculate the mean and standard deviation of the train data

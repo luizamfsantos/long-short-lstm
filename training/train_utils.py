@@ -17,8 +17,12 @@ def get_logger(logger_name='model_training'):
     f_handler = logging.FileHandler('logs/model_training.log')
     
     # Create formatters and add them to handlers
-    c_format = logging.Formatter('[%(asctime)s:%(levelname)s]: %(message)s')
-    f_format = logging.Formatter('[%(asctime)s:%(levelname)s]: %(message)s')
+    c_format = logging.Formatter(
+        fmt='%(asctime)s - %(levelname)s [[%(filename)s:%(lineno)d]]: %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S')
+    f_format = logging.Formatter(
+        fmt='%(asctime)s - %(levelname)s [[%(filename)s:%(lineno)d]]: %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S')
     c_handler.setFormatter(c_format)
     f_handler.setFormatter(f_format)
     
