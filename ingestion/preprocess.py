@@ -42,21 +42,53 @@ def read_data(
         if file_list:
             dataset = read_data(file_list, batch_size=None)
         else:
-            logging.warning(f'No {data_type} data found in {folder_path}')
+            logger.warning(f'No {data_type} data found in {folder_path}')
             return None
     else:
         market_dataset = read_data(folder_path, data_type='market', batch_size=None)
         fundamentalist_dataset = read_data(folder_path, data_type='fundamentalist', batch_size=None)
+        # check that the datasets have the data and ticker columns
+        if 'date' not in market_dataset.schema.names or 'ticker' not in market_dataset.schema.names:
+            market_dataset = None
+        if 'date' not in fundamentalist_dataset.schema.names or 'ticker' not in fundamentalist_dataset.schema.names:
+            fundamentalist_dataset = None  
         if market_dataset and fundamentalist_dataset:
             dataset = market_dataset.join(fundamentalist_dataset,
                                           keys=['date', 'ticker'],
                                           join_type='full outer')
         else:
             dataset = market_dataset or fundamentalist_dataset
+            if not dataset:
+                logger.warning(f'No data found in {folder_path}')
+                return None
     # sort the data by the timestamp
     dataset = dataset.sort_by('date')
     if batch_size is None:
         return dataset
     return dataset.to_batches(batch_size=batch_size)
 
-# def get_average
+def normalize_data(df: pd.DataFrame, train_stats: pd.DataFrame) -> pd.DataFrame:
+    """ Normalize the test data using the train data statistics. """
+    return (df - train_stats['mean']) / train_stats['std']
+
+def get_train_stats(train_data: pd.DataFrame) -> pd.DataFrame:
+    """ Calculate the mean and standard deviation of the train data. """
+    return train_data.describe().loc[['mean', 'std']]
+
+def preprocess(
+    input_path: str | list[str],
+    output_path: str,
+    test: bool = False):
+    # Get data
+    data = ...
+    # Convert prices to returns
+    calculate_returns(data, 'price') # TODO: change the column name
+    # Calculate the mean and standard deviation of the train data
+    if not test:
+        train_stats = get_train_stats(data)
+        # TODO: Save the train data statistic
+    else:
+        train_stats = ... # TODO: Read the train data statistics
+    # Normalize the data
+    data_normalized = normalize_data(data, train_stats)
+    # TODO: Save the normalized data
