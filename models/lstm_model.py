@@ -5,8 +5,6 @@ from torch.optim import Adam
 import lightning as L
 import os
 
-SEED: int = int(os.getenv('GLOBAL_SEED', L.seed_everything()))
-
 class LSTMModel(L.LightningModule):
 
     def __init__(
@@ -37,7 +35,8 @@ class LSTMModel(L.LightningModule):
         super().__init__()
         self.save_hyperparameters()
 
-        L.seed_everything(seed=SEED)
+        seed = os.environ.get('SEED', 42)
+        L.seed_everything(seed)
 
         # lstm = long short-term memory unit
         self.lstm = nn.LSTM(input_size=input_size, 
