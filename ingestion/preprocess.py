@@ -8,14 +8,12 @@ from typing import Iterator
 from pathlib import Path
 from ingestion.ingestion_utils import get_logger
 
-logger = get_logger('preprocessing')
+# Step 1: Sort the dataframe by both date and ticker so that we can easily map values to the tensor.
+# Step 2: Create a dictionary of tickers and their corresponding indices.
+# Step 3: Iterate through the dataframe and create a tensor where each row corresponds to a ticker and each column represents the features for a specific timestamp.
+# Step 4: Create a tensor for the target variable.
 
-def calculate_target_variable(df: pd.DataFrame, column_name: str) -> pd.DataFrame:
-    """ The goal of the model is to predict the direction of the stock price.
-    Because of this, the target variable will be a binary variable that indicates
-    if the stock price will go up or down. This function will calculate the target
-    variable based on the stock price."""
-    df['target'] = (df[column_name] - df[column_name].shift(1)) > 0
+logger = get_logger('preprocessing')
 
 def read_data(
     folder_path: str | list[str], 
@@ -72,23 +70,15 @@ def convert_datatype(df: pd.DataFrame) -> pd.DataFrame:
     df = df.dropna(how='all', axis=1)
     return df
 
-def preprocess(
-    input_path: str | list[str],
-    output_path: str,
-    test: bool = False):
-    # Get data
-    data = read_data(input_path) # TODO: modify to read in batches
-    # Convert prices to returns
-    calculate_returns(data, 'price') # TODO: change the column name
-    # Calculate the mean and standard deviation of the train data
-    if not test:
-        train_stats = get_train_stats(data)
-        # TODO: Save the train data statistic
-    else:
-        train_stats = ... # TODO: Read the train data statistics
-    # Normalize the data
-    data_normalized = normalize_data(data, train_stats)
-    # TODO: Save the normalized data
+def calculate_target_variable(df: pd.DataFrame, return_column: str = 'variacaopercent') -> None:
+    """ The goal of the model is to predict the direction of the stock price.
+    Because of this, the target variable will be a binary variable that indicates
+    if the stock price will go up. This function will calculate the target
+    variable based on returns."""
+    df['target'] = df[return_column] > 0
+    df['target'] = df['target'].astype('int8')
+
+
 
 
 
