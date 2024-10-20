@@ -3,6 +3,9 @@
 
 # Repository structure
 ```{lua}
+|- checkpoints                     # Store model checkpoints
+  |-- model_20241001.ckpt
+  |-- model_20241014.ckpt
 |- data
   |-- raw/                         # Store raw, unprocessed data by stock
     |-- PETR4.json

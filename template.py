@@ -8,6 +8,7 @@ logging.basicConfig(level=logging.INFO, format='[%(asctime)s:%(levelname)s]: %(m
 project_name = 'long-short-lstm'
 
 list_of_files = [
+    'checkpoints/.gitkeep',
     'data/raw/.gitkeep',
     'data/raw_combined/.gitkeep',
     'data/processed/.gitkeep',
