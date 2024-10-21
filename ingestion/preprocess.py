@@ -93,6 +93,22 @@ def calculate_target_variable(
     df['target'] = df['target'].astype('int8')
 
 
+def handle_missing_values(
+    df: pd.DataFrame
+) -> pd.DataFrame:
+    """ Deal with missing values in the dataframe.
+    For now, we will forward fill the missing values. d
+    """
+    return df.ffill().bfill()
+
+
+def drop_duplicates(
+    df: pd.DataFrame
+) -> pd.DataFrame:
+    """ Drop duplicates from the dataframe. """
+    return df.drop_duplicates()
+
+
 def convert_to_tensor(
     data_generator: Iterator[pa.RecordBatch],
     tensor_path: str = 'data/processed/tensor_batches',
@@ -110,12 +126,17 @@ def convert_to_tensor(
         batch_df = batch.to_pandas()
         # Convert data types
         batch_df = convert_datatype(batch_df)
+        # Handle missing values
+        batch_df = handle_missing_values(batch_df)
+        # Drop duplicates
+        batch_df = drop_duplicates(batch_df)
         # Calculate target variable
         calculate_target_variable(batch_df)
         if feature_names is None:
             feature_names = [col for col in batch_df.columns if col not in [
-                'date', 'ticker', 'target', 
-                'p/l', 'despesa_de_depreciacao,_amortizacao_e_exaustao_3_meses_consolidado__milhoes']] # the last 2 are giving problems
+                'date', 'ticker', 'target',
+                # the last 2 are giving problems
+                'p/l', 'despesa_de_depreciacao,_amortizacao_e_exaustao_3_meses_consolidado__milhoes']]
         for _, row in batch_df.iterrows():
             ticker = row['ticker']
             timestamp = row['date']
@@ -134,6 +155,7 @@ def convert_to_tensor(
             batch_tensor[ticker_index, timestamp_index, :] = torch.tensor(
                 [getattr(row, feature) for feature in feature_names])
             batch_target[ticker_index, timestamp_index, 0] = row.target
+
         # Save tensors to disk
         torch.save(batch_tensor, f'{tensor_path}/tensor_{batch_counter}.pt')
         torch.save(batch_target, f'{target_path}/target_{batch_counter}.pt')
