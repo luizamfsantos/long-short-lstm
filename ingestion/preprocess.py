@@ -186,14 +186,14 @@ def load_tensors(
     tensor_path: str = 'data/processed/tensor_batches',
     target_path: str = 'data/processed/target_batches',
     metadata_path: str = 'data/processed/metadata.pt'
-) -> Iterator[[torch.Tensor, torch.Tensor]]:
+) -> Iterator[[torch.Tensor, torch.Tensor, int]]:
     """ Load the tensors from disk and return a generator to iterate over them. """
-    metadata = torch.load('data/processed/metadata.pt')
+    metadata = torch.load('data/processed/metadata.pt', weights_only=False)
     num_batches = metadata['num_batches']
     for i in range(num_batches):
-        tensor = torch.load(f'{tensor_path}/tensor_{i}.pt')
-        target = torch.load(f'{target_path}/target_{i}.pt')
-        yield tensor, target
+        tensor = torch.load(f'{tensor_path}/tensor_{i}.pt', weights_only=True)
+        target = torch.load(f'{target_path}/target_{i}.pt', weights_only=True)
+        yield tensor, target, num_batches
 
 
 def preprocess_data(
