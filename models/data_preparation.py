@@ -6,8 +6,7 @@ import lightning as L
 from torch.utils.data import (
     Dataset,
     DataLoader)
-import pyarrow.dataset as ds
-from ingestion.preprocess import read_data
+from ingestion.preprocess import load_tensors
 
 # Step 1: Sort the dataframe by both date and ticker so that we can easily map values to the tensor.
 # Step 2: Create a dictionary of tickers and their corresponding indices.
@@ -15,22 +14,19 @@ from ingestion.preprocess import read_data
 # Step 4: Create a tensor for the target variable.
 
 class TimeSeriesData(Dataset):
-    def __init__(self, folder_path: str, batch_size = 10000):
-        """ Batch size is the number of rows to read at a time
-        The raw data is organized by data and the columns are the features.
-        If there are 200 tickers, and batch_size is 1000, 
-        then the first batch will have 1000/200 = 5 rows per ticker.
+    def __init__(self, folder_path: str = 'data/processed'):
+        """ The tensors have the shape [number_tickers, number_timestamps, feature_vector]
+        Target variable have the shape [number_tickers, number_timestamps, 1]
+        data/processed/tensor_batches have the .pt files that contain the tensors
+        data/processed/targets have the .pt files that contain the target variables
         """
-        self.folder_path = folder_path
-        self.data_generator = read_data(folder_path, batch_size=batch_size)
-        self.total_rows = len(self)
-        self.batch = next(self.data_generator) # get the first batch
+        self.X, self.y = load_tensors(folder_path) # first tensor batch and target variable
+        
 
     def __len__(self):
-        if not (hasattr(self, 'total_rows')):
-            self.total_rows = sum(batch.num_rows for batch in self.data_generator)
-            self.data_generator = read_data(self.folder_path)  # reset the generator
-        return self.total_rows
+        """ return the total number of rows in the tensor batch """
+        ...
 
     def __getitem__(self):
-        """ At each iteration """
+        """ At each iteration return the next row in the tensor """
+        ...

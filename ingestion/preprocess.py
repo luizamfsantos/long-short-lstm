@@ -65,7 +65,9 @@ def read_data(
     return dataset.to_batches(batch_size=batch_size)
 
 
-def convert_datatype(df: pd.DataFrame) -> pd.DataFrame:
+def convert_datatype(
+    df: pd.DataFrame
+) -> pd.DataFrame:
     """ Convert the data types of the columns.
     Ticker should be string,
     Date should be datetime,
@@ -79,7 +81,10 @@ def convert_datatype(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def calculate_target_variable(df: pd.DataFrame, return_column: str = 'variacaopercent') -> None:
+def calculate_target_variable(
+    df: pd.DataFrame,
+    return_column: str = 'variacaopercent'
+) -> None:
     """ The goal of the model is to predict the direction of the stock price.
     Because of this, the target variable will be a binary variable that indicates
     if the stock price will go up. This function will calculate the target
@@ -88,20 +93,25 @@ def calculate_target_variable(df: pd.DataFrame, return_column: str = 'variacaope
     df['target'] = df['target'].astype('int8')
 
 
-def convert_to_tensor(data_generator: Iterator[pa.RecordBatch], batch_size: int = 1000) -> tuple:
+def convert_to_tensor(
+    data_generator: Iterator[pa.RecordBatch],
+    tensor_path: str = 'data/processed/tensor_batches',
+    target_path: str = 'data/processed/target_batches'
+) -> None:
     """ Convert the data generator to tensors in batches, 
-    saving intermediate results to disk.
-    Returns the paths to the saved tensor files. """
+    saving intermediate results to disk."""
     ticker_idx = {}
     timestamp_idx = {}
     feature_names = None
     batch_counter = 0
-    tensor_path = 'data/processed/tensor_batches'
-    target_path = 'data/processed/target_batches'
     os.makedirs(tensor_path, exist_ok=True)
     os.makedirs(target_path, exist_ok=True)
     for batch in data_generator:
         batch_df = batch.to_pandas()
+        # Convert data types
+        batch_df = convert_datatype(batch_df)
+        # Calculate target variable
+        calculate_target_variable(batch_df)
         if feature_names is None:
             feature_names = [col for col in batch_df.columns if col not in [
                 'date', 'ticker', 'target']]
@@ -141,4 +151,34 @@ def convert_to_tensor(data_generator: Iterator[pa.RecordBatch], batch_size: int 
         del batch_tensor
         del batch_target
         del batch_df
-    return tensor_path, target_path
+
+
+def load_tensors(
+    tensor_path: str = 'data/processed/tensor_batches',
+    target_path: str = 'data/processed/target_batches',
+    metadata_path: str = 'data/processed/metadata.pt'
+) -> Iterator[[torch.Tensor, torch.Tensor]]:
+    """ Load the tensors from disk and return a generator to iterate over them. """
+    metadata = torch.load('data/processed/metadata.pt')
+    num_batches = metadata['num_batches']
+    for i in range(num_batches):
+        tensor = torch.load(f'{tensor_path}/tensor_{i}.pt')
+        target = torch.load(f'{target_path}/target_{i}.pt')
+        yield tensor, target
+
+
+def preprocess_data(
+    raw_data_path: str = 'data/raw_combined',
+    preprocessed_tensor_path: str = 'data/processed/tensor_batches',
+    preprocessed_target_path: str = 'data/processed/target_batches',
+    batch_size: int = 1000
+) -> None:
+    """ Preprocess the data and save the tensors to disk. """
+    data_generator = read_data(raw_data_path, batch_size=batch_size)
+    convert_to_tensor(data_generator,
+                      tensor_path=preprocessed_tensor_path,
+                      target_path=preprocessed_target_path)
+
+
+if __name__ == '__main__':
+    preprocess_data()
