@@ -7,6 +7,7 @@ data/**/**.csv
 data/**/**.parquet
 data/**/**.json
 data/**/**.zip
+data/**/**.pt
 
 # Don't commit __pycache__ 
 **/__pycache__
