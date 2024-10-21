@@ -174,6 +174,12 @@ def convert_to_tensor(
         del batch_tensor
         del batch_target
         del batch_df
+    logger.info(
+        f'Number of batches: {batch_counter}\n'
+        f'{len(ticker_idx)} tickers found: {list(ticker_idx.keys())}\n'
+        f'{len(timestamp_idx)} timestamps found.\n'
+        f'Min and max timestamps: {min(timestamp_idx.keys())} and {max(timestamp_idx.keys())}'
+    )
 
 
 def load_tensors(
@@ -198,9 +204,12 @@ def preprocess_data(
 ) -> None:
     """ Preprocess the data and save the tensors to disk. """
     data_generator = read_data(raw_data_path, batch_size=batch_size)
+    logger.info('Data read successfully')
     convert_to_tensor(data_generator,
                       tensor_path=preprocessed_tensor_path,
                       target_path=preprocessed_target_path)
+    logger.info('Tensors saved successfully. They can be found in %s and %s',
+                preprocessed_tensor_path, preprocessed_target_path)
 
 
 if __name__ == '__main__':
