@@ -114,7 +114,8 @@ def convert_to_tensor(
         calculate_target_variable(batch_df)
         if feature_names is None:
             feature_names = [col for col in batch_df.columns if col not in [
-                'date', 'ticker', 'target']]
+                'date', 'ticker', 'target', 
+                'p/l', 'despesa_de_depreciacao,_amortizacao_e_exaustao_3_meses_consolidado__milhoes']] # the last 2 are giving problems
         for _, row in batch_df.iterrows():
             ticker = row['ticker']
             timestamp = row['date']
@@ -127,12 +128,12 @@ def convert_to_tensor(
         batch_tensor = torch.zeros(len(ticker_idx), len(
             timestamp_idx), len(feature_names))
         batch_target = torch.zeros(len(ticker_idx), len(timestamp_idx), 1)
-        for _, row in batch_df.iterrows():
-            ticker_index = ticker_idx[row['ticker']]
-            timestamp_index = timestamp_idx[row['date']]
-            batch_tensor[ticker_index, timestamp_index,
-                         :] = torch.tensor(row[feature_names].values)
-            batch_target[ticker_index, timestamp_index, 0] = row['target']
+        for row in batch_df.itertuples(index=False):
+            ticker_index = ticker_idx[row.ticker]
+            timestamp_index = timestamp_idx[row.date]
+            batch_tensor[ticker_index, timestamp_index, :] = torch.tensor(
+                [getattr(row, feature) for feature in feature_names])
+            batch_target[ticker_index, timestamp_index, 0] = row.target
         # Save tensors to disk
         torch.save(batch_tensor, f'{tensor_path}/tensor_{batch_counter}.pt')
         torch.save(batch_target, f'{target_path}/target_{batch_counter}.pt')
