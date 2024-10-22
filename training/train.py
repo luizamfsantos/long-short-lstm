@@ -3,6 +3,7 @@ from models.lstm_model import LSTMModel
 import torch.nn.functional as F
 from lightning.pytorch import Trainer
 from training.train_utils import get_config, get_logger
+from models.data_preparation import TimeSeriesData
 
 
 def main():
@@ -24,8 +25,9 @@ def main():
         devices="auto",
         accelerator="auto",
         default_root_dir="checkpoints")
-    #train_loader = [] # TODO: add dataloader here
-    #trainer.fit(model=lstm, train_dataloaders=train_loader)
+    train_dataset = TimeseriesDataset(seq_len = config.get('SEQUENCE_LENGTH', 5))
+    train_loader = DataLoader(train_dataset, shuffle = False)
+    trainer.fit(model=lstm, train_dataloaders=train_loader)
 
 if __name__ == '__main__':
     main()
