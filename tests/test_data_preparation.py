@@ -45,9 +45,10 @@ class TestTimeSeriesData:
         assert dataset.batch_length == 100
         assert dataset.batch_start_idx == 0
 
-    # def test_len(self, dataset):
-    #     """ Test if __len__ returns correct total legth"""
-    #     assert len(dataset) == 6
+    @pytest.mark.skip(reason="Not implemented yet")
+    def test_len(self, dataset):
+        """ Test if __len__ returns correct total legth"""
+        assert len(dataset) == 6
 
     def test_getitem_within_batch(self, dataset):
         """ Test if __getitem__ returns correct sequence within the current batch"""

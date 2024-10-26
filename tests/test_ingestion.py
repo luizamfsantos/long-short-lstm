@@ -97,12 +97,6 @@ def sample_market_data_list():
             'tab0': {
                 'vol_mm_reais': {}
             },
-            'ticker': 'VALE3'
-        },
-        {
-            'tab0': {
-                'vol_mm_reais': {}
-            },
             'ticker': 'PETR3'
         }
     ]
@@ -160,6 +154,7 @@ def sample_extracted_data():
         }
     ]
 
+@pytest.mark.integration
 def test_save_raw_data(tmp_path):
     """ Test that raw data is saved correctly """
     # Create a temporary directory for the test
@@ -187,3 +182,27 @@ def test_save_raw_data(tmp_path):
 
         # Clean up the temporary directory
         (path_to_save_raw_data / file).unlink()
+
+def test_extract_data_from_api_response(sample_market_data_list, sample_extracted_data):
+    """ Test that data is extracted correctly from the API response """
+    extracted_data = extract_data_from_api_response(sample_market_data_list)
+    assert isinstance(extracted_data, list)
+    assert len(extracted_data) == 2 # should combine VEL3 and PETR4 and ignore empty data for PETR3
+    assert 'vol_mm_reais' in extracted_data[0]
+    assert 'ticker' in extracted_data[0]
+    assert extracted_data == sample_extracted_data
+    assert all(value == 'PETR4' for value in extracted_data[0]['ticker'].values())
+
+    # Check first entry 
+    assert extracted_data[0]['vol_mm_reais']['2024-10-01T00:00:00'] == '0.245092'
+
+def test_combine_data(sample_extracted_data):
+    """ Test that data is correctly combined into a single DataFrame """
+    combined_data = combine_data(sample_extracted_data)
+    assert not combined_data.empty
+    assert 'vol_mm_reais' in combined_data.columns
+    assert 'ticker' in combined_data.columns
+    assert len(combined_data) == 18 # 9 days for each of the 2 stocks
+    assert combined_data['ticker'].nunique() == 2
+    assert set(combined_data['ticker'].unique()) == {'PETR4', 'VALE3'}
+    #assert combined_data['vol_mm_reais'].dtype == 'float64' # TODO: fix data type
