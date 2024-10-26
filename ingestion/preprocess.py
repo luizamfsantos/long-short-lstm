@@ -4,7 +4,7 @@ import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 import pyarrow.dataset as ds
-from typing import Iterator
+from typing import Iterator, NamedTuple
 from pathlib import Path
 import torch
 from ingestion.ingestion_utils import get_logger
@@ -18,6 +18,10 @@ from ingestion.ingestion_utils import get_logger
 
 logger = get_logger('preprocessing')
 
+class BatchData(NamedTuple):
+    tensor: torch.Tensor
+    target: torch.Tensor
+    num_batches: int
 
 def read_data(
     folder_path: str | list[str],
@@ -186,7 +190,7 @@ def load_tensors(
     tensor_path: str = 'data/processed/tensor_batches',
     target_path: str = 'data/processed/target_batches',
     metadata_path: str = 'data/processed/metadata.pt'
-) -> Iterator[[torch.Tensor, torch.Tensor, int]]:
+) -> Iterator[BatchData]:
     """ Load the tensors from disk and return a generator to iterate over them. """
     metadata = torch.load('data/processed/metadata.pt', weights_only=False)
     num_batches = metadata['num_batches']
