@@ -1,4 +1,5 @@
 # the tensor will have the shape [number_tickers, number_timestamps, feature_vector]
+# but dataloader will return the shape [batch_size, number_tickers, sequence_length, feature_vector]
 # number_tickers is the number of unique tickers in the dataset
 # number_timestamps is the number of unique timestamps in the dataset
 
