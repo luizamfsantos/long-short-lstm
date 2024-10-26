@@ -31,8 +31,8 @@ def get_config(
 
 
 def get_logger(
-    logger_name: str = 'ingestion', 
-    debug: bool = False):
+        logger_name: str = 'ingestion',
+        debug: bool = False):
     # Ensure the logs directory exists
     os.makedirs('logs', exist_ok=True)
 
@@ -91,8 +91,9 @@ def send_request(
     querystring = {'code': 'import_data'}
     headers = {'Content-Type': 'application/x-www-form-urlencoded'}
     output_format = 'json3'
-    data = f'username={username}&password={
-        password}&URL={URL}&format={output_format}'
+    data = f'username={username}&'\
+        f'password={password}&URL={URL}&'\
+        f'format={output_format}'
     response = requests.post(
         base_url, data=data, headers=headers, params=querystring)
     response.raise_for_status()
@@ -143,8 +144,9 @@ def get_market_data(
     request_time_format = '%d%m%Y'
     start_time = format_request_time(start_time, request_time_format)
     end_time = format_request_time(end_time, request_time_format)
-    URL = f'HistoricoCotacaoAcao001-{ticker}-{
-        start_time}-{end_time}-{flag_ajusted}-{page}'
+    URL = 'HistoricoCotacaoAcao001-'\
+        f'{ticker}-{start_time}-{end_time}-'\
+        f'{flag_ajusted}-{page}'
     return send_request(URL, username, password)
 
 
