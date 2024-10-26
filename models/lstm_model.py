@@ -41,7 +41,7 @@ class LSTMModel(L.LightningModule):
         self.save_hyperparameters()
 
         L.seed_everything(seed)
-
+        # TODO: is this stateless or stateful?
         # lstm = long short-term memory unit
         self.lstm = nn.LSTM(input_size=input_size, 
                             hidden_size=hidden_size,
@@ -51,22 +51,34 @@ class LSTMModel(L.LightningModule):
                             proj_size = 0,
                             batch_first = True,
                             bias=True)
-        # linear = fully connected layer
+        # linear = fully connected layer for each ticker's prediction
         self.linear = nn.Linear(hidden_size, 1)
         # activation function: transform the output into a probability
         self.activation = torch.sigmoid
 
-    def forward(self, input: torch.Tensor):
+    def forward(self, in_tensor: torch.Tensor):
         """ Forward pass
-        input = tensor with shape (batch_size, sequence_length, input_size)
-        lstm_out = tensor with shape (batch_size, sequence_length, hidden_size)
+        in_tensor = tensor with shape (batch_size, num_tickers, sequence_length, input_size)
+        lstm_out = tensor with shape (batch_size, num_tickers, 1) # where 1 is the prediction for each ticker
         """
-        lstm_out, _ = self.lstm(input)
-        # lstm_out has the short-term memories for all inputs. We make a prediction based on the last one.
-        linear_out = self.linear(lstm_out[:, -1, :])
-        # transform solution in probability
-        prediction = self.activation(linear_out)
-        return prediction
+        batch_size, num_tickers, sequence_length, input_size = input.size()
+
+        # Process each ticker separately
+        ticker_outputs = []
+        for i in range(num_tickers):
+            # run the LSTM for each ticker
+            lstm_out, _ = self.lstm(in_tensor[:, i, :, :]) # (batch_size, sequence_length, hidden_size)
+            # get last output
+            last_output = lstm_out[:, -1, :] # (batch_size, hidden_size)
+            # get the prediction for the ticker
+            linear_out = self.linear(last_output)
+            # transform the output into a probability: remember binary classification!
+            prediction = self.activation(linear_out)
+            ticker_outputs.append(prediction)
+
+        # stack the predictions for all tickers
+        output = torch.stack(ticker_outputs, dim=1) # (batch_size, num_tickers, 1)
+        return output
 
     def configure_optimizers(self, learning_rate: float | None = None):
         if not learning_rate:
@@ -74,9 +86,13 @@ class LSTMModel(L.LightningModule):
         return Adam(self.parameters(), lr=learning_rate)
 
     def training_step(self, batch: [torch.Tensor, torch.Tensor], batch_idx: int):
+        # input_i (batch_size, num_tickers, sequence_length, feature_length)
+        # target_i (batch_size, num_tickers, 1)
         input_i, target_i = batch # input_i is the input data, target_i is the target data
-        output_i = self.forward(input_i)
+        output_i = self.forward(input_i) # (batch_size, num_tickers, 1)
+        # calculate the loss across all tickers 
         loss = self.hparams.criterion(output_i, target_i)
+        # Log overall loss and per-ticker loss
         self.log('train_loss', loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
         return loss
 
