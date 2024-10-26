@@ -66,5 +66,27 @@ class TestTimeSeriesData:
         idx = 99
         X, y = dataset[idx]
         logging.debug(f"X: {X.shape}")
-        assert X.shape == (5, 2, 4), f'X shape is incorrect: {X.shape}'
-        # assert y.shape == (5, 2, 1)
+        assert X.shape == (5, 2, 4)
+        assert y.shape == (5, 2, 1)
+
+        # TODO: Check if the returned sequence is correct
+        # problem to test, the current_X and current_y don't have the
+        # previous batch data, so torch.equal can't be used
+
+    def test_getitem_exactly_at_the_end_of_batch(self, dataset):
+        """ Test if __getitem__ returns correct sequence at the end of the batch"""
+        idx = 100
+        X, y = dataset[idx]
+
+        assert X.shape == (5, 2, 4)
+        assert y.shape == (5, 2, 1)
+
+        # Check if the returned sequence is correct
+        assert torch.equal(X, dataset.current_X[:, 0:2, :])
+        assert torch.equal(y, dataset.current_y[:, 0:2, :])
+
+    def test_getitem_out_of_bounds(self, dataset):
+        """ Test if __getitem__ raises IndexError when the index is out of bounds """
+        with pytest.raises(IndexError):
+            dataset[201] # should raise IndexError after exhausting all the data
+            
