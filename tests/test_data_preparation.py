@@ -104,3 +104,18 @@ class TestTimeSeriesData:
             assert seq_len == 2
             assert num_features == 4
             assert y.shape == (2, 5, 2, 1) # batch_size, num_tickers, seq_len, 1
+
+        assert i == 49  # 100 timestamps / 2 batch size = 50 batches
+        assert len(dataloader) == 50
+
+    def test_sequential_access(self, dataset):
+        """ Test sequential access of multiple items"""
+        sequences = [dataset[i] for i in range(10)]
+        for i, (X, y) in enumerate(sequences):
+            assert X.shape == (5, 2, 4)
+            assert y.shape == (5, 2, 1)
+            if i > 0:
+                prev_X, prev_y = sequences[i-1]
+                # check if sequences are continuous
+                assert torch.equal(X[:, 0, :], prev_X[:, 1, :])
+                assert torch.equal(y[:, 0, :], prev_y[:, 1, :])
