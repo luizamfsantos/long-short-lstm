@@ -12,4 +12,7 @@ COPY . .
 
 VOLUME /data
 
-CMD ["/bin/bash", "run_simulation.sh"]
+# ensure the code is working before the simulation
+RUN ./scripts/run_tests.sh 
+
+CMD ["./scripts/run_simulation.sh"]
