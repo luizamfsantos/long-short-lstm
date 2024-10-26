@@ -119,3 +119,19 @@ class TestTimeSeriesData:
                 # check if sequences are continuous
                 assert torch.equal(X[:, 0, :], prev_X[:, 1, :])
                 assert torch.equal(y[:, 0, :], prev_y[:, 1, :])
+
+    @pytest.mark.parametrize("seq_len", [2, 8, 16])
+    def test_different_sequence_lengths(self, mock_generator, seq_len):
+        """ Test dataset with different sequence lengths """
+        with patch('models.data_preparation.load_tensors') as mock_load:
+            mock_load.return_value = iter(mock_generator)
+            dataset = TimeSeriesData(
+                seq_len=seq_len,
+                tensor_path='dummy/path',
+                target_path='dummy/path',
+                metadata_path='dummy/path'
+            )
+
+            X, y = dataset[0]
+            assert X.shape == (5, seq_len, 4)
+            assert y.shape == (5, seq_len, 1)
