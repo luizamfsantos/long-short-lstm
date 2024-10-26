@@ -1,4 +1,4 @@
 #!/bin/bash
 
 # Test data preparation
-python -m pytest tests/test_data_preparation.py
+python -m pytest tests/test_data_preparation.py -v
