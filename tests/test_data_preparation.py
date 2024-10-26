@@ -89,4 +89,18 @@ class TestTimeSeriesData:
         """ Test if __getitem__ raises IndexError when the index is out of bounds """
         with pytest.raises(IndexError):
             dataset[201] # should raise IndexError after exhausting all the data
-            
+
+    def test_with_dataloader(self, dataset):
+        """ Test integration with DataLoader """
+        dataloader = DataLoader(
+            dataset, 
+            batch_size=2, 
+            shuffle=False
+            )
+        for i, (X, y) in enumerate(dataloader):
+            batch_size, num_tickers, seq_len, num_features = X.size()
+            assert batch_size == 2
+            assert num_tickers == 5
+            assert seq_len == 2
+            assert num_features == 4
+            assert y.shape == (2, 5, 2, 1) # batch_size, num_tickers, seq_len, 1

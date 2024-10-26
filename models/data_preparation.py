@@ -81,4 +81,4 @@ class TimeSeriesData(Dataset):
 
 # example usage
 # train_dataset = TimeseriesDataset(seq_len = 5)
-# train_loader = DataLoader(train_dataset, shuffle = False)
+# train_loader = DataLoader(train_dataset, batch_size=1,shuffle=False)
