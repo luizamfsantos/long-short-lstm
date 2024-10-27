@@ -8,3 +8,5 @@ LSTM:
   DROPOUT_RATE: 0.0 # the rate in which to drop connections
   LEARNING_RATE: 0.001 # the learning rate
   NUM_EPOCHS: 100 # the number of epochs
+  DEVICES: auto # the devices to use for training
+  ACCELERATOR: auto # the accelerator to use for training
