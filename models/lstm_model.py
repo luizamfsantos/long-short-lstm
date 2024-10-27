@@ -62,7 +62,7 @@ class LSTMModel(L.LightningModule):
         in_tensor = tensor with shape (batch_size, num_tickers, sequence_length, input_size)
         lstm_out = tensor with shape (batch_size, num_tickers, 1) # where 1 is the prediction for each ticker
         """
-        batch_size, num_tickers, sequence_length, input_size = input.size()
+        batch_size, num_tickers, sequence_length, input_size = in_tensor.size()
 
         # Process each ticker separately
         ticker_outputs = []
