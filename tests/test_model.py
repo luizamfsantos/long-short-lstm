@@ -85,7 +85,7 @@ def test_test_step(model_params, sample_batch, tmp_path):
     loss = model.test_step(sample_batch, batch_idx=0) # TODO: how does batch_idx work?
 
     assert isinstance(loss, torch.Tensor)
-    assert loss.requires_grad
+    assert loss.requires_grad # TODO: shouldn't this be False?
     assert loss.item() >= 0
     assert not torch.isnan(loss) # check if the loss is not NaN
     assert not torch.isinf(loss) # check if the loss is not infinity
@@ -153,3 +153,37 @@ def test_different_feature_lengths(model_params, feature_length):
     target_tensor = torch.randint(2, (batch_size, num_tickers, 1)).float()
     output = model(input_tensor)
     assert output.size() == (batch_size, num_tickers, 1)
+
+def test_droupout_effect(model_params):
+    model = LSTMModel(**model_params)
+    input_tensor = torch.rand((4,3, model_params['sequence_length'], model_params['input_size']))
+
+    # test in train mode
+    model.train()
+    out1 = model(input_tensor)
+    out2 = model(input_tensor)
+    assert not torch.allclose(out1, out2) # output should be different because of dropout
+
+    # test in eval model
+    model.eval()
+    out3 = model(input_tensor)
+    out4 = model(input_tensor)
+    assert torch.allclose(out3, out4) # output should be the same because dropout is turned off
+
+def test_edge_cases_zero_input_size(model_params):
+    model_params_copy = model_params.copy()
+    model_params_copy['input_size'] = 0
+    model = LSTMModel(**model_params_copy)
+    input_tensor = torch.rand((4,3, model_params_copy['sequence_length'], 0))
+    output = model(input_tensor)
+    assert not torch.isnan(output).any()
+
+def test_edge_cases_large_input_size(model_params):
+    model_params_copy = model_params.copy()
+    model_params_copy['input_size'] = 1000
+    model = LSTMModel(**model_params_copy)
+    input_tensor = torch.rand((4,3, model_params_copy['sequence_length'], 1000))
+    output = model(input_tensor)
+    assert not torch.isnan(output).any()
+    assert torch.all((output >= 0) & (output <= 1)) # check if the output is a probability
+
