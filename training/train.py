@@ -1,12 +1,13 @@
+import os
 import torch
+import argparse
 from models.lstm_model import LSTMModel
 import torch.nn.functional as F
 from lightning.pytorch import Trainer
 from training.train_utils import get_config, get_logger
 from models.data_preparation import TimeSeriesData
-import argparse
+from torch.utils.data import DataLoader
 from pathlib import Path
-
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
@@ -24,6 +25,15 @@ def check_checkpoint_valid(checkpoint_file_path: str) -> bool:
     path = Path(checkpoint_file_path)
     return path.is_file() and path.suffix == '.ckpt' and path.stat().st_size > 0
 
+def clear_checkpoints():
+    checkpoints_path = Path("checkpoints")
+    if checkpoints_path.exists():
+        shutil.rmtree(checkpoints_path)
+        print("Checkpoints cleared.")
+
+def create_data_loader(config):
+    dataset = TimeseriesDataset(seq_len=config.get('SEQUENCE_LENGTH', 5))
+    return DataLoader(dataset, shuffle=False)
 
 def main():
     args = parse_arguments()
@@ -33,7 +43,7 @@ def main():
     os.makedirs('checkpoints', exist_ok=True)
 
     if args.clear_checkpoints:
-        os.system('rm -rf checkpoints/*')
+        clear_checkpoints()
 
     lstm = LSTMModel(
         input_size=config['INPUT_SIZE'],
@@ -46,20 +56,23 @@ def main():
         num_epochs=config.get('NUM_EPOCHS', 100),
         criterion=config.get('CRITERION', F.binary_cross_entropy))
     logger.info(f'Model initialized with hyperparameters: {lstm.hparams}')
+
+    if args.load_from_checkpoint and not check_checkpoint_valid(args.load_from_checkpoint):
+        raise ValueError('Invalid checkpoint file path')
+
+    trainer = Trainer(
+        devices=config.get('DEVICES', 'auto'),
+        accelerator=config.get('ACCELERATOR', 'auto'),
+        default_root_dir=config.get('ROOT_DIR', 'checkpoints')
+    )
+    
+    train_dataset = TimeseriesDataset(
+                    seq_len=config.get('SEQUENCE_LENGTH', 5))
+    train_loader = DataLoader(train_dataset, shuffle=False)
+    
     if args.load_from_checkpoint:
-        if not check_checkpoint_valid(args.load_from_checkpoint):
-            raise ValueError('Invalid checkpoint file path')
-        trainer = Trainer()
-        trainer.fit(model=lstm, checkpoint_path=args.load_from_checkpoint)
+        trainer.fit(model=lstm, ckpt_path=args.load_from_checkpoint)
     else:
-        trainer = Trainer(
-            devices=config.get('DEVICES', 'auto'),
-            accelerator=config.get('ACCELERATOR', 'auto'),
-            default_root_dir=config.get('ROOT_DIR', 'checkpoints')
-        )
-        train_dataset = TimeseriesDataset(
-            seq_len=config.get('SEQUENCE_LENGTH', 5))
-        train_loader = DataLoader(train_dataset, shuffle=False)
         trainer.fit(model=lstm, train_dataloaders=train_loader)
 
 
