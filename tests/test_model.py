@@ -187,3 +187,14 @@ def test_edge_cases_large_input_size(model_params):
     assert not torch.isnan(output).any()
     assert torch.all((output >= 0) & (output <= 1)) # check if the output is a probability
 
+def test_learning_rate_override(model_params):
+    model = LSTMModel(**model_params)
+    optimizer = model.configure_optimizers()
+    assert optimizer.param_groups[0]['lr'] == model_params['learning_rate']
+
+    model_params_copy = model_params.copy()
+    model_params_copy['learning_rate'] = 1e-4
+    model = LSTMModel(**model_params_copy)
+    optimizer = model.configure_optimizers()
+    assert optimizer.param_groups[0]['lr'] == model_params_copy['learning_rate']
+
