@@ -13,6 +13,7 @@ from ingestion.preprocess import load_tensors
 # Step 3: Iterate through the dataframe and create a tensor where each row corresponds to a ticker and each column represents the features for a specific timestamp.
 # Step 4: Create a tensor for the target variable.
 
+# TODO: where can transformations be applied to the data?
 
 class TimeSeriesData(Dataset):
     def __init__(self,
@@ -82,3 +83,5 @@ class TimeSeriesData(Dataset):
 # example usage
 # train_dataset = TimeseriesDataset(seq_len = 5)
 # train_loader = DataLoader(train_dataset, batch_size=1,shuffle=False)
+
+# TODO: should I add LightningDataModule to this class?
