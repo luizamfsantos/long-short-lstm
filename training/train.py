@@ -1,6 +1,7 @@
 import os
 import torch
 import argparse
+import shutil
 from models.lstm_model import LSTMModel
 import torch.nn.functional as F
 from lightning.pytorch import Trainer
@@ -65,8 +66,8 @@ def main():
         accelerator=config.get('ACCELERATOR', 'auto'),
         default_root_dir=config.get('ROOT_DIR', 'checkpoints')
     )
-    
-    train_dataset = TimeseriesDataset(
+
+    train_dataset = TimeSeriesData(
                     seq_len=config.get('SEQUENCE_LENGTH', 5))
     train_loader = DataLoader(train_dataset, shuffle=False)
     
