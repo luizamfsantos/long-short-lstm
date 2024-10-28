@@ -93,20 +93,14 @@ class LSTMModel(L.LightningModule):
         output_i = self.forward(input_i) # (batch_size, num_tickers, 1)
         # calculate the loss across all tickers 
         loss = self.hparams.criterion(output_i, target_i)
-        # Log overall loss and per-ticker loss
-        self.log('train_loss', loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
-        return loss
-
-    def validation_step(self, batch: [torch.Tensor, torch.Tensor], batch_idx: int):
-        input_i, target_i = batch
-        output_i = self.forward(input_i)
-        loss = self.hparams.criterion(output_i, target_i)
-        self.log('val_loss', loss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
+        # TODO: implement logger: Log overall loss and per-ticker loss
+        #self.log('train_loss', loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
         return loss
 
     def test_step(self, batch: [torch.Tensor, torch.Tensor], batch_idx: int):
         input_i, target_i = batch
         output_i = self.forward(input_i)
         loss = self.hparams.criterion(output_i, target_i)
-        self.log('test_loss', loss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
+        # TODO: implement logger: Log overall loss and per-ticker loss
+        #self.log('test_loss', loss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
         return loss
