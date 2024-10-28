@@ -33,7 +33,7 @@ def clear_checkpoints():
         print("Checkpoints cleared.")
 
 def create_data_loader(config):
-    dataset = TimeseriesDataset(seq_len=config.get('SEQUENCE_LENGTH', 5))
+    dataset = TimeseriesData(seq_len=config.get('SEQUENCE_LENGTH', 5))
     return DataLoader(dataset, shuffle=False)
 
 def main():
