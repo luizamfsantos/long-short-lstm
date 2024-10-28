@@ -69,7 +69,7 @@ def main():
 
     train_dataset = TimeSeriesData(
                     seq_len=config.get('SEQUENCE_LENGTH', 5))
-    train_loader = DataLoader(train_dataset, shuffle=False)
+    train_loader = DataLoader(train_dataset, shuffle=False, num_workers=9, persistent_workers=True)
     
     if args.load_from_checkpoint:
         trainer.fit(model=lstm, ckpt_path=args.load_from_checkpoint)
