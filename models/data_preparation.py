@@ -35,10 +35,15 @@ class TimeSeriesData(Dataset):
         self.total_length = self.batch_length # Total number of timestamps loaded
         self.batch_start_idx = 0
 
-
-    # TODO: what is the purpose of this method?
     def __len__(self):
-        return self.batch_length # total number of timestamps in the current batch
+        """ This is used to calculate the total length of the dataset. 
+        It is the total number of timestamps minus the sequence length.
+        It is called by the DataLoader to determine the number of batches."""
+        mock_generator = load_tensors(self.tensor_path, self.target_path, self.metadata_path)
+        total_length = 0
+        for batch_input, batch_output, _ in mock_generator:
+            total_length += batch_input.shape[1]
+        return total_length - self.seq_len
 
     def _load_next_batch(self):
         """ Load the next batch from the generator """
