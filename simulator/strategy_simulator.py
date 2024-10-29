@@ -30,10 +30,7 @@ def strategy_simulator(
         pd.Series: Updated portfolio next day returns.
         pd.DataFrame: Updated weights database.
     """
-
-    # If path does not exist, create it
-    if not os.path.exists(path):
-        os.makedirs(path)
+    os.makedirs(path, exist_ok=True)
 
     # Calculate the weights for the specified t value
     weights = strategy.calculate_next_weights(data, t=t, **kwargs)
@@ -42,7 +39,7 @@ def strategy_simulator(
     weights_db = pd.concat([weights_db, weights], axis=0)
     weights_db.to_parquet(path + "weights_db.parquet")
 
-    # Calculate and save portfolio returns
+    # Calculate and save portfolio returns TODO: adjust to use column variacaopercent from data
     prices = data['stocks']
     prices_1 = prices[weights.ticker].loc[prices.index[t - 1:t + 1]]
     returns_1 = np.log(prices_1).diff().tail(1).mean()
