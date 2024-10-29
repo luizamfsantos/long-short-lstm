@@ -16,21 +16,21 @@ class LongShortStrategy(StrategyInterface):
         Returns:
             pd.DataFrame: Weights for the next period.
         """
-        # Get the data
-        prices = data['stocks']
-        returns = prices.pct_change()
+        #Get the data: model will receive forecast from LSTM
+        prices = data['stocks'] # TODO: adjust to use data from raw_combined parquet files
+        returns = prices.pct_change() # TODO: adjust to use column variacaopercent from data
 
-        # Calculate the momentum
-        momentum = returns.rolling(window=252).mean().iloc[t - 1]
+        # Use LSTM to predict the direction of each stock
+        # 
 
-        # Sort the momentum
-        momentum = momentum.sort_values(ascending=False)
+        # # Calculate the momentum
+        # momentum = returns.rolling(window=252).mean().iloc[t - 1]
 
-        # Select the top and bottom stocks
-        top_stocks = momentum.head(10)
-        bottom_stocks = momentum.tail(10)
+        # # Select the top and bottom stocks
+        # top_stocks = momentum.head(10)
+        # bottom_stocks = momentum.tail(10)
 
-        # Calculate the weights
+        # Calculate the weights: TODO: how to get the simulator know that bottom_stocks are short positions?
         weights = pd.concat([top_stocks, bottom_stocks], axis=0)
         weights = weights / weights.abs().sum()
         # return a dataframe with the columns date, ticker, and weights
