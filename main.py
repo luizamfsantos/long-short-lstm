@@ -11,12 +11,15 @@ def main():
     # TODO: load last model checkpoint
     model = LSTMModel.load_from_checkpoint('checkpoints/lstm_model.ckpt')
     model.eval()
-    forecast = model.predict(data)
+    forecast = model.predict(data) # TODO: instead of calling at this point, call it inside the strategy or the loop
 
     # TODO: create object of LongShortStrategy
     strategy = LongShortStrategy()
     # check execution for one day
-    weights = strategy.calculate_next_weights(data, t=1)
+    weights = strategy.calculate_next_weights(forecast, t=1)
+    assert isinstance(weights, pd.DataFrame), 'Invalid return type'
+    assert {'date','ticker', 'weights'}.issubset(weights.columns), 'Missing columns in return'
+    assert not weights.empty, 'Empty return'
     assert stategy.check_return(weights), 'Could not calculate weights or invalid return'
 
     # initialize data structures to store results
@@ -28,6 +31,7 @@ def main():
     for t in range(1, 10):
         # use the strategy simulator to get portfolio's historical weights [weights_db]
         # and its next day returns [ret_port]
+        # TODO: call LSTMModel to get forecast
         ret_port, weights_db = strategy_simulator(
             path='results/',
             strategy=strategy,
