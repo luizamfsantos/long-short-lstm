@@ -41,8 +41,8 @@ def strategy_simulator(
 
     # Calculate and save portfolio returns TODO: adjust to use column variacaopercent from data
     prices = data['stocks']
-    prices_1 = prices[weights.ticker].loc[prices.index[t - 1:t + 1]]
-    returns_1 = np.log(prices_1).diff().tail(1).mean()
+    prices_1 = prices[weights.ticker].loc[prices.index[t - 1:t + 1]] 
+    returns_1 = np.log(prices_1).diff().tail(1).mean() # TODO: modify this to allow for short positions
     weights_index = weights.weights
     weights_index.index = weights.ticker
     ret_port[prices.index[t]] = returns_1 @ weights_index
