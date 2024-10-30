@@ -1,8 +1,8 @@
 # TO DO LIST
 
 Big Buckets
-A. [ ] Get data
-B. [ ] Create model
+A. [X] Get data
+B. [X] Create model
 C. [ ] Train model
 D. [ ] Test model
 E. [ ] Implement strategy
@@ -11,18 +11,18 @@ F. [ ] Write article
 
 A. Get data bucket
 [ X ] Write function to request data -> It needs testing
-[+/-] Get stock list -> It needs to check which is available through the API
-[   ] Data storage -> raw, cleaned, model ready
+[ X ] Get stock list -> It needs to check which is available through the API
+[ X ] Data storage -> raw, cleaned, model ready
 [ X ] Decide input features (OHLC, volume, technical indicators)
-[   ] Normalize/scale data for the model
-[   ] Prepare data to use sliding window
-[   ] Implement sliding window to the data
+[ ? ] Normalize/scale data for the model
+[ X ] Prepare data to use sliding window
+[ X ] Implement sliding window to the data
 
 B. Create model bucket
-[+/-] Define LSTM architecture (number of layers, units per layer) -> It needs testing
-[   ] Add dropout layers (to prevent overfitting)
-[   ] Define activation functions
-[+/-] Compile the model (choose optimizer and loss function) -> It needs testing
+[ X ] Define LSTM architecture (number of layers, units per layer
+[ X ] Add dropout layers (to prevent overfitting)
+[ X ] Define activation functions
+[ X ] Choose optimizer and loss function
 
 C. Train model bucket
 [   ] Split data into training and validation sets for sliding windows
@@ -40,10 +40,10 @@ D. Test model bucket
 [   ] Assess model robustness
 
 E. Implement strategy bucket
-[   ] Define long short trading logic based on model predictions
-[   ] Simulate trades with trading program
+[+/-] Define long short trading logic based on model predictions
+[+/-] Simulate trades with trading program
 [   ] Fine-tune strategy parameters (stop loss, take profit levels)
-[   ] Measure overall strategy performance (Sharpe ratio, max drawdown)
+[   ] Measure overall strategy performance (Sharpe ratio, max drawdown): tearsheet
 
 F. Write article bucket
 [+/-] Introduction to LSTM in stock trading
