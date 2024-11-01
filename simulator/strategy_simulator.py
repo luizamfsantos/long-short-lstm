@@ -22,6 +22,7 @@ def strategy_simulator(
         path (string): path to save strategy data
         strategy (StrategyInterface): Strategy according to the StrategyInterface
         data (dict): Dictionary containing necessary data.
+        forecast (torch.Tensor): predictions for each stock.
         t (int): Time value for calculation.
         ret_port (pd.Series): Accumulated portfolio returns.
         weights_db (pd.DataFrame): Accumulated weights database.
@@ -33,7 +34,7 @@ def strategy_simulator(
     os.makedirs(path, exist_ok=True)
 
     # Calculate the weights for the specified t value
-    weights = strategy.calculate_next_weights(data, t=t, **kwargs)
+    weights = strategy.calculate_next_weights(forecast, t=t) # weights.columns = ['ticker', 'weights', 'date', 'position']
 
     # Save a weights database
     weights_db = pd.concat([weights_db, weights], axis=0)
