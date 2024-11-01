@@ -36,6 +36,7 @@ class LongShortStrategy(StrategyInterface):
         else:
             long_count = self.long_count
             short_count = self.short_count
+        
         # Select the top and bottom stocks
         top_stocks_idx = forecast.topk(long_count).indices
         top_stocks_names = ...  # TODO: get the names of the top stocks
@@ -46,8 +47,10 @@ class LongShortStrategy(StrategyInterface):
         bottom_stocks = pd.DataFrame(
             {'ticker': bottom_stocks_names, 'weights': 1, 'date': t, 'position': 'short'})
         weights_df = pd.concat([top_stocks, bottom_stocks], axis=0)
+        
         # Normalize the weights
         weights_df['weights'] = weights_df['weights'] / \
             weights_df['weights'].abs().sum()  
+        
         # return a dataframe with the columns date, ticker, weights and position
         return weights.to_frame().T
