@@ -3,24 +3,39 @@ import quantstats as qs
 from trading.long_short_strategy import LongShortStrategy
 from simulator.strategy_simulator import strategy_simulator
 from models.lstm_model import LSTMModel
+from simulator.simulator_utils import get_config, get_logger
+
 
 def main():
+    # Get logger
+    logger = get_logger()
+    logger.info('Starting simulation')
+
+    # Get configuration
+    config = get_config()
+
     # TODO: load test data
     data = []
 
     # TODO: load last model checkpoint
     model = LSTMModel.load_from_checkpoint('checkpoints/lstm_model.ckpt')
     model.eval()
-    forecast = model.predict(data) # TODO: instead of calling at this point, call it inside the strategy or the loop
+    # TODO: instead of calling at this point, call it inside the strategy or the loop
+    forecast = model.predict(data)
 
     # TODO: create object of LongShortStrategy
-    strategy = LongShortStrategy()
+    strategy = LongShortStrategy(
+        config.get('LONG_COUNT', 10),
+        config.get('SHORT_COUNT', 10)
+    )
     # check execution for one day
     weights = strategy.calculate_next_weights(forecast, t=1)
     assert isinstance(weights, pd.DataFrame), 'Invalid return type'
-    assert {'date','ticker', 'weights'}.issubset(weights.columns), 'Missing columns in return'
+    assert {'date', 'ticker', 'weights'}.issubset(
+        weights.columns), 'Missing columns in return'
     assert not weights.empty, 'Empty return'
-    assert stategy.check_return(weights), 'Could not calculate weights or invalid return'
+    assert stategy.check_return(
+        weights), 'Could not calculate weights or invalid return'
 
     # initialize data structures to store results
     ret_port = pd.Series(dtype=float)
@@ -40,13 +55,13 @@ def main():
             ret_port=ret_port,
             weights_db=weights_db
         )
-    
+
     # Generate the performance report
     ret_port = pd.read_parquet('results/ret_port.parquet')
     ret_port['date'] = pd.to_datetime(ret_port['date'])
     ret_port.set_index('date', inplace=True)
-    ret_port = ret_port['ret_port'] # get only the returns column
-    qs.reports.html(ret_port,'^BVSP', text_description="""
+    ret_port = ret_port['ret_port']  # get only the returns column
+    qs.reports.html(ret_port, '^BVSP', text_description="""
     <p> Demonstration of a simple strategy</p>
     <p><strong>Important:</strong> Trading costs, taxes, and other fees were not considered in this simulation.</p>
     """)
