@@ -13,3 +13,4 @@ LSTM:
 SIMULATOR:
   SHORT_COUNT: 10 # the number of short positions to take
   LONG_COUNT: 10 # the number of long positions to take
+  SIMULATION_DAYS: 100 # the number of days to simulate

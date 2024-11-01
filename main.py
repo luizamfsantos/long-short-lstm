@@ -4,7 +4,7 @@ from trading.long_short_strategy import LongShortStrategy
 from simulator.strategy_simulator import strategy_simulator
 from models.lstm_model import LSTMModel
 from simulator.simulator_utils import get_config, get_logger
-
+from ingestion.preprocess import load_tensors
 
 def main():
     # Get logger
@@ -14,42 +14,34 @@ def main():
     # Get configuration
     config = get_config()
 
-    # TODO: load test data
-    data = []
+    # Load test data and metadata
+    data = load_tensors() # TODO: split data into train and test
 
-    # TODO: load last model checkpoint
+    # Load last model checkpoint
     model = LSTMModel.load_from_checkpoint('checkpoints/lstm_model.ckpt')
     model.eval()
-    # TODO: instead of calling at this point, call it inside the strategy or the loop
-    forecast = model.predict(data)
 
-    # TODO: create object of LongShortStrategy
+    # Create object of LongShortStrategy
     strategy = LongShortStrategy(
         config.get('LONG_COUNT', 10),
         config.get('SHORT_COUNT', 10)
     )
-    # check execution for one day
-    weights = strategy.calculate_next_weights(forecast, t=1)
-    assert isinstance(weights, pd.DataFrame), 'Invalid return type'
-    assert {'date', 'ticker', 'weights'}.issubset(
-        weights.columns), 'Missing columns in return'
-    assert not weights.empty, 'Empty return'
-    assert stategy.check_return(
-        weights), 'Could not calculate weights or invalid return'
 
     # initialize data structures to store results
     ret_port = pd.Series(dtype=float)
     weights_db = pd.DataFrame(columns=['date', 'ticker', 'weights'])
 
-    # TODO: add argsparse to get the number of days to run the simulation
     # loop through a range of time values
-    for t in range(1, 10):
+    simulation_days = config.get('SIMULATION_DAYS', 100)
+    logging.info(f'Running simulation for {simulation_days} days')
+    for t in range(1, simulation_days):
+        forecast = model(data) # TODO: adjust to use number of days for sequence_length
         # use the strategy simulator to get portfolio's historical weights [weights_db]
         # and its next day returns [ret_port]
-        # TODO: call LSTMModel to get forecast
         ret_port, weights_db = strategy_simulator(
             path='results/',
             strategy=strategy,
+            forecast=forecast,
             data=data,
             t=t,
             ret_port=ret_port,
@@ -60,7 +52,7 @@ def main():
     ret_port = pd.read_parquet('results/ret_port.parquet')
     ret_port['date'] = pd.to_datetime(ret_port['date'])
     ret_port.set_index('date', inplace=True)
-    ret_port = ret_port['ret_port']  # get only the returns column
+    ret_port = ret_port['ret_port']
     qs.reports.html(ret_port, '^BVSP', text_description="""
     <p> Demonstration of a simple strategy</p>
     <p><strong>Important:</strong> Trading costs, taxes, and other fees were not considered in this simulation.</p>
