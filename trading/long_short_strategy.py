@@ -46,7 +46,8 @@ class LongShortStrategy(StrategyInterface):
         bottom_stocks = pd.DataFrame(
             {'ticker': bottom_stocks_names, 'weights': 1, 'date': t, 'position': 'short'})
         weights_df = pd.concat([top_stocks, bottom_stocks], axis=0)
+        # Normalize the weights
         weights_df['weights'] = weights_df['weights'] / \
-            weights_df['weights'].abs().sum()  # Normalize the weights
+            weights_df['weights'].abs().sum()  
         # return a dataframe with the columns date, ticker, weights and position
         return weights.to_frame().T
