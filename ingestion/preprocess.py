@@ -9,9 +9,11 @@ from pathlib import Path
 import torch
 from ingestion.ingestion_utils import get_logger
 
-# Step 1: Sort the dataframe by both date and ticker so that we can easily map values to the tensor.
+# Step 1: Sort the dataframe by both date and ticker so that we can easily map
+#            values to the tensor.
 # Step 2: Create a dictionary of tickers and their corresponding indices.
-# Step 3: Iterate through the dataframe and create a tensor where each row corresponds to a ticker and each column represents the features for a specific timestamp.
+# Step 3: Iterate through the dataframe and create a tensor where each row corresponds 
+#           to a ticker and each column represents the features for a specific timestamp.
 # Step 4: Create a tensor for the target variable.
 # the tensor X will have the shape [number_tickers, number_timestamps, feature_vector]
 # the tensor y will have the shape [number_tickers, number_timestamps, 1]
@@ -21,38 +23,43 @@ logger = get_logger('preprocessing')
 class BatchData(NamedTuple):
     tensor: torch.Tensor
     target: torch.Tensor
-    num_batches: int
+    num_batches: torch.Tensor
 
 def read_data(
     folder_path: str | list[str],
     data_type: str | None = None,
     batch_size: int | None = 1000
 ) -> Iterator[pa.RecordBatch] | ds.Dataset | None:
-    """ Read the parquet files from the data/raw_combined folder and return a generator 
-    to iterate over the data. """
+    """ Read the parquet files from the data/raw_combined 
+    folder and return a generator to iterate over the data. """
     if isinstance(folder_path, list):
         dataset = ds.dataset(folder_path, format='parquet')
     elif data_type is not None:
         if data_type not in ['market', 'fundamentalist']:
-            raise ValueError(
-                'data_type should be either market or fundamentalist')
+            raise ValueError('data_type should be either '
+                             'market or fundamentalist')
         folder_path = Path(folder_path)
         file_list = list(folder_path.glob(f'**/*{data_type}*.parquet'))
         if file_list:
-            dataset = read_data(file_list, batch_size=None)
+            dataset = read_data(file_list, batch_size=None) # recursive call
         else:
             logger.warning(f'No {data_type} data found in {folder_path}')
             return None
     else:
-        market_dataset = read_data(
-            folder_path, data_type='market', batch_size=None)
-        fundamentalist_dataset = read_data(
-            folder_path, data_type='fundamentalist', batch_size=None)
+        market_dataset = read_data(folder_path,
+                                   data_type='market',
+                                   batch_size=None)
+        fundamentalist_dataset = read_data(folder_path,
+                                           data_type='fundamentalist',
+                                           batch_size=None)
         # check that the datasets have the data and ticker columns
-        if 'date' not in market_dataset.schema.names or 'ticker' not in market_dataset.schema.names:
+        if 'date' not in market_dataset.schema.names \
+                or 'ticker' not in market_dataset.schema.names:
             market_dataset = None
-        if 'date' not in fundamentalist_dataset.schema.names or 'ticker' not in fundamentalist_dataset.schema.names:
+        if 'date' not in fundamentalist_dataset.schema.names \
+                or 'ticker' not in fundamentalist_dataset.schema.names:
             fundamentalist_dataset = None
+        # combine schemas
         if market_dataset and fundamentalist_dataset:
             dataset = market_dataset.join(fundamentalist_dataset,
                                           keys=['date', 'ticker'],
@@ -103,7 +110,7 @@ def handle_missing_values(
     """ Deal with missing values in the dataframe.
     For now, we will forward fill the missing values. d
     """
-    return df.ffill().bfill()
+    return df.groupby('ticker').ffill().fillna(0).reset_index()
 
 
 def drop_duplicates(
@@ -131,7 +138,7 @@ def convert_to_tensor(
         # Convert data types
         batch_df = convert_datatype(batch_df)
         # Handle missing values
-        batch_df = handle_missing_values(batch_df)
+        batch_df = handle_missing_values(batch_df) # TODO: handle missing values from one batch to the next
         # Drop duplicates
         batch_df = drop_duplicates(batch_df)
         # Calculate target variable
@@ -150,9 +157,12 @@ def convert_to_tensor(
                 timestamp_idx[timestamp] = len(timestamp_idx)
 
         # Create batch tensors
-        batch_tensor = torch.zeros(len(ticker_idx), len(
-            timestamp_idx), len(feature_names))
-        batch_target = torch.zeros(len(ticker_idx), len(timestamp_idx), 1)
+        batch_tensor = torch.zeros(len(ticker_idx),
+                                   len(timestamp_idx),
+                                   len(feature_names))
+        batch_target = torch.zeros(len(ticker_idx),
+                                   len(timestamp_idx),
+                                   1)
         for row in batch_df.itertuples(index=False):
             ticker_index = ticker_idx[row.ticker]
             timestamp_index = timestamp_idx[row.date]
@@ -193,11 +203,10 @@ def load_tensors(
 ) -> Iterator[BatchData]:
     """ Load the tensors from disk and return a generator to iterate over them. """
     metadata = torch.load('data/processed/metadata.pt', weights_only=False)
-    num_batches = metadata['num_batches']
     for i in range(num_batches):
         tensor = torch.load(f'{tensor_path}/tensor_{i}.pt', weights_only=True)
         target = torch.load(f'{target_path}/target_{i}.pt', weights_only=True)
-        yield tensor, target, num_batches
+        yield tensor, target, metadata
 
 
 def preprocess_data(
