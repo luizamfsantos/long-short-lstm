@@ -38,6 +38,7 @@ class RandomDataModule(L.LightningDataModule):
         seq_len: int,
         num_tickers: int,
         feature_length: int,
+        timestamps: int,
         batch_size: int,
     ):
         super().__init__()
@@ -45,17 +46,20 @@ class RandomDataModule(L.LightningDataModule):
         self.num_tickers = num_tickers
         self.feature_length = feature_length
         self.batch_size = batch_size
+        self.timestamps = timestamps
 
     def setup(self, stage=None):
         self.train_data = RandomDataset(
             seq_len=self.seq_len,
             num_tickers=self.num_tickers,
             feature_length=self.feature_length,
+            timestamps=self.timestamps,
         )
         self.test_data = RandomDataset(
             seq_len=self.seq_len,
             num_tickers=self.num_tickers,
             feature_length=self.feature_length,
+            timestamps=self.timestamps,
         )
 
     def train_dataloader(self):
