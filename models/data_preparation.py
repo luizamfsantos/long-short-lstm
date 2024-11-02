@@ -72,17 +72,15 @@ class TimeSeriesData(Dataset):
             second_part_len = self.seq_len - first_part_len
             # First part of the sequence
             X_first = self.current_X[:, local_idx:, :]
-            y_first = self.current_y[:, local_idx:, :]
             # Second part of the sequence
             self._load_next_batch()
             X_second = self.current_X[:, :second_part_len, :]
-            y_second = self.current_y[:, :second_part_len, :]
+            y = self.current_y[:, second_part_len, :]
             # Concatenate the two parts
-            X = torch.cat([X_first, X_second], dim=1) 
-            y = torch.cat([y_first, y_second], dim=1)
+            X = torch.cat([X_first, X_second], dim=1)
         else:
             X = self.current_X[:, local_idx:local_idx+self.seq_len, :]
-            y = self.current_y[:, local_idx:local_idx+self.seq_len, :]
+            y = self.current_y[:, local_idx+self.seq_len, :]
         return X, y
 
 class TimeSeriesDataSingleBatch(Dataset):
@@ -116,22 +114,22 @@ class TimeSeriesDataModule(L.LightningDataModule):
         self.seq_len = seq_len # this is how many timestamps the model will look at to make a prediction
 
     def setup(self, stage=None):
-        self.data_train = TimeSeriesDataSingleBatch(
+        self.train_data = TimeSeriesDataSingleBatch(
             seq_len=self.seq_len,
             input_tensor_path=f'{self.data_dir}/input_train.pt',
             target_tensor_path=f'{self.data_dir}/target_train.pt'
         )
-        self.data_test = TimeSeriesDataSingleBatch(
+        self.test_data = TimeSeriesDataSingleBatch(
             seq_len=self.seq_len,
             input_tensor_path=f'{self.data_dir}/input_test.pt',
             target_tensor_path=f'{self.data_dir}/target_test.pt'
         )
     
     def train_dataloader(self):
-        return DataLoader(self.data_train, batch_size=self.batch_size, shuffle=False)
+        return DataLoader(self.train_data, batch_size=self.batch_size, shuffle=False)
 
     def test_dataloader(self):
-        return DataLoader(self.data_test, batch_size=self.batch_size, shuffle=False)
+        return DataLoader(self.test_data, batch_size=self.batch_size, shuffle=False)
 
 # example usage
 # train_dataset = TimeseriesDataset(seq_len = 5)
