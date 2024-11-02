@@ -6,25 +6,28 @@ from lightning.pytorch import Trainer
 from torch.utils.data import DataLoader, TensorDataset, Dataset
 from models.lstm_model import LSTMModel
 
+
 class RandomDataset(Dataset):
     def __init__(
-        self, 
+        self,
         seq_len: int,
         num_tickers: int,
         feature_length: int,
+        timestamps: int,
     ):
         self.seq_len = seq_len
         self.num_tickers = num_tickers
         self.feature_length = feature_length
         self.data = torch.rand(
-            (num_tickers, seq_len, feature_length)
+            (num_tickers, timestamps, feature_length)
         )
-        # TODO: should it be (num_tickers, 1, 1)?
-        self.target = torch.randint(2, (num_tickers, 1))
+        self.target = torch.randint(
+            2,
+            (num_tickers, timestamps, 1))
 
     def __getitem__(self, index: int) -> torch.Tensor:
         return self.data[:, index:index+self.seq_len, :], \
-                self.target[:, index+self.seq_len, :]
+            self.target[:, index+self.seq_len, :]
 
     def __len__(self) -> int:
         return self.data.size(1) - self.seq_len
@@ -56,10 +59,12 @@ class RandomDataModule(L.LightningDataModule):
         )
 
     def train_dataloader(self):
-        return DataLoader(self.train_data, batch_size=self.batch_size)
+        return DataLoader(self.train_data,
+                          batch_size=self.batch_size)
 
     def test_dataloader(self):
-        return DataLoader(self.test_data, batch_size=self.batch_size)
+        return DataLoader(self.test_data,
+                          batch_size=self.batch_size)
 
 @pytest.fixture
 def model_params():
