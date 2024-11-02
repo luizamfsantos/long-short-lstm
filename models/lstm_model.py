@@ -14,7 +14,7 @@ class LSTMModel(L.LightningModule):
 
     def __init__(
         self, 
-        input_size: int, 
+        feature_length: int, 
         hidden_size: int,
         sequence_length: int=5,
         batch_size: int=1,
@@ -27,7 +27,7 @@ class LSTMModel(L.LightningModule):
         """ Initialize LSTM unit 
         
         Args:
-        input_size: number of features in the data
+        feature_length: number of features in the data
         hidden_size: size of output
         sequence_length: number of time steps in the data
         batch_size: number of samples per batch
@@ -44,7 +44,7 @@ class LSTMModel(L.LightningModule):
         L.seed_everything(seed)
         # TODO: is this stateless or stateful?
         # lstm = long short-term memory unit
-        self.lstm = nn.LSTM(input_size=input_size, 
+        self.lstm = nn.LSTM(input_size=feature_length, 
                             hidden_size=hidden_size,
                             num_layers=num_layers,
                             dropout=dropout_rate,
@@ -59,10 +59,10 @@ class LSTMModel(L.LightningModule):
 
     def forward(self, in_tensor: torch.Tensor):
         """ Forward pass
-        in_tensor = tensor with shape (batch_size, num_tickers, sequence_length, input_size)
+        in_tensor = tensor with shape (batch_size, num_tickers, sequence_length, feature_length)
         lstm_out = tensor with shape (batch_size, num_tickers, 1) # where 1 is the prediction for each ticker
         """
-        batch_size, num_tickers, sequence_length, input_size = in_tensor.size()
+        batch_size, num_tickers, sequence_length, feature_length = in_tensor.size()
 
         # Process each ticker separately
         ticker_outputs = []
@@ -95,14 +95,12 @@ class LSTMModel(L.LightningModule):
         output_i = self.forward(input_i) # (batch_size, num_tickers, 1)
         # calculate the loss across all tickers, compare the output to the last value in the sequence of the target
         loss = self.hparams.criterion(output_i[:, :, -1, :], target_i[:, :, -1, :]) # (batch_size, num_tickers, 1)
-        # TODO: implement logger: Log overall loss and per-ticker loss
-        #self.log('train_loss', loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
+        self.log('train_loss', loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
         return loss
 
     def test_step(self, batch: [torch.Tensor, torch.Tensor], batch_idx: int):
         input_i, target_i = batch
         output_i = self.forward(input_i)
         loss = self.hparams.criterion(output_i[:, :, -1, :], target_i[:, :, -1, :])
-        # TODO: implement logger: Log overall loss and per-ticker loss
-        #self.log('test_loss', loss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
+        self.log('test_loss', loss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
         return loss
