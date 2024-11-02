@@ -113,5 +113,4 @@ class TimeSeriesDataModule(L.LightningDataModule):
                           shuffle=False)
 
 # example usage
-# train_dataset = TimeseriesDataset(seq_len = 5)
-# train_loader = DataLoader(train_dataset, batch_size=1,shuffle=False)
+# data_module = TimeSeriesDataModule()
