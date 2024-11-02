@@ -57,7 +57,8 @@ class TimeSeriesDataModule(L.LightningDataModule):
         self.data_dir = data_dir
         self.batch_size = batch_size 
         self.seq_len = seq_len
-        assert self._check_data_exists(), 'Data does not exist. Run data_preparation.py to generate data.'
+        assert self._check_data_exists(), 'Data does not exist. ' \
+                                          'Run data_preparation.py to generate data.'
 
     def _check_data_exists(self):
         """ Check if the input and target tensors exist. """
