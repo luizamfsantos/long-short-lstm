@@ -10,12 +10,13 @@ from models.lstm_model import LSTMModel
 class RandomDataset(Dataset):
     def __init__(
         self,
-        seq_len: int,
+        sequence_length: int,
         num_tickers: int,
         feature_length: int,
         timestamps: int,
+        **kwargs
     ):
-        self.seq_len = seq_len
+        self.sequence_length = sequence_length
         self.num_tickers = num_tickers
         self.feature_length = feature_length
         self.data = torch.rand(
@@ -26,23 +27,24 @@ class RandomDataset(Dataset):
             (num_tickers, timestamps, 1))
 
     def __getitem__(self, index: int) -> torch.Tensor:
-        return self.data[:, index:index+self.seq_len, :], \
-            self.target[:, index+self.seq_len, :]
+        return self.data[:, index:index+self.sequence_length, :], \
+            self.target[:, index+self.sequence_length, :]
 
     def __len__(self) -> int:
-        return self.data.size(1) - self.seq_len
+        return self.data.size(1) - self.sequence_length
 
 class RandomDataModule(L.LightningDataModule):
     def __init__(
         self, 
-        seq_len: int,
+        sequence_length: int,
         num_tickers: int,
         feature_length: int,
         timestamps: int,
         batch_size: int,
+        **kwargs
     ):
         super().__init__()
-        self.seq_len = seq_len
+        self.sequence_length = sequence_length
         self.num_tickers = num_tickers
         self.feature_length = feature_length
         self.batch_size = batch_size
@@ -50,13 +52,13 @@ class RandomDataModule(L.LightningDataModule):
 
     def setup(self, stage=None):
         self.train_data = RandomDataset(
-            seq_len=self.seq_len,
+            sequence_length=self.sequence_length,
             num_tickers=self.num_tickers,
             feature_length=self.feature_length,
             timestamps=self.timestamps,
         )
         self.test_data = RandomDataset(
-            seq_len=self.seq_len,
+            sequence_length=self.sequence_length,
             num_tickers=self.num_tickers,
             feature_length=self.feature_length,
             timestamps=self.timestamps,
@@ -73,7 +75,7 @@ class RandomDataModule(L.LightningDataModule):
 @pytest.fixture
 def model_params():
     return {
-        'input_size': 10,
+        'feature_length': 10,
         'hidden_size': 20,
         'sequence_length': 5,
         'batch_size': 1,
@@ -82,21 +84,6 @@ def model_params():
         'learning_rate': 1e-3,
         'num_epochs': 100,
     }
-
-
-@pytest.fixture
-def sample_batch():
-    batch_size = 4
-    num_tickers = 3
-    sequence_length = 5
-    feature_length = 10
-
-    in_tensor = torch.rand(
-        (batch_size, num_tickers, sequence_length, feature_length))
-    # TODO: do I need the float()?
-    target_tensor = torch.randint(2, (batch_size, num_tickers, 1)).float()
-
-    return in_tensor, target_tensor
 
 
 def test_model_init(model_params):
@@ -108,7 +95,7 @@ def test_model_init(model_params):
     assert isinstance(model.linear, nn.Linear)
 
     # check lstm parameters
-    assert model.lstm.input_size == model_params['input_size']
+    assert model.lstm.input_size == model_params['feature_length']
     assert model.lstm.hidden_size == model_params['hidden_size']
     assert model.lstm.num_layers == model_params['num_layers']
 
@@ -117,10 +104,10 @@ def test_model_init(model_params):
     assert model.linear.out_features == 1
 
 
-def test_forward_pass_shape(model_params, sample_batch):
+def test_forward_pass_shape(model_params):
     model = LSTMModel(**model_params)
     trainer = Trainer()
-    # in_tensor, target_tensor = sample_batch
+    data_module = RandomDataModule(**model_params)
 
     # output = model(in_tensor)
 
