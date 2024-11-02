@@ -34,9 +34,12 @@ class TimeSeriesDataSingleBatch(Dataset):
         return self.input_tensor.shape[1] - self.seq_len
 
     def __getitem__(self, idx):
-        """ Returns a sequence of input and target tensors. """
+        """ Returns a sequence of input and target tensors.
+        input_tensor: tensor with shape (num_tickers, seq_len, features)
+        target_tensor: tensor with shape (num_tickers, 1)
+        """
         return self.input_tensor[:, idx:idx+self.seq_len, :], \
-               self.target_tensor[:, idx+self.seq_len, :] 
+            self.target_tensor[:, idx+self.seq_len, :]
 
 
 class TimeSeriesDataModule(L.LightningDataModule):
