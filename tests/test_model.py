@@ -14,7 +14,6 @@ class RandomDataset(Dataset):
         num_tickers: int,
         feature_length: int,
         timestamps: int,
-        **kwargs
     ):
         self.sequence_length = sequence_length
         self.num_tickers = num_tickers
@@ -41,7 +40,6 @@ class RandomDataModule(L.LightningDataModule):
         feature_length: int,
         timestamps: int,
         batch_size: int,
-        **kwargs
     ):
         super().__init__()
         self.sequence_length = sequence_length
@@ -83,6 +81,16 @@ def model_params():
         'dropout_rate': 0.2,
         'learning_rate': 1e-3,
         'num_epochs': 100,
+    }
+
+@pytest.fixture
+def data_params():
+    return {
+        'sequence_length': 5,
+        'num_tickers': 3,
+        'feature_length': 10,
+        'timestamps': 100,
+        'batch_size': 1,
     }
 
 
