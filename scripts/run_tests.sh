@@ -8,3 +8,6 @@ python -m pytest tests/test_data_preparation.py
 
 # Test model
 python -m pytest tests/test_model.py
+
+# Test training
+python -m pytest tests/test_training.py
