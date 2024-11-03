@@ -4,7 +4,7 @@ import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 import pyarrow.dataset as ds
-from typing import Iterator
+from typing import Iterator, Tuple
 from dataclasses import dataclass
 from pathlib import Path
 import torch
@@ -32,7 +32,7 @@ class TensorMetadata:
         torch.save(self, path)
 
     @classmethod
-    def load(cls, path: str) -> TensorMetadata:
+    def load(cls, path: str) -> 'TensorMetadata':
         data = torch.load(path, weights_only=False)
         return cls(**data)
 
