@@ -87,9 +87,9 @@ class RandomDataModule(L.LightningDataModule):
 def model_params():
     return {
         'feature_length': 10,
-        'hidden_size': 5,
+        'hidden_size': 6,
         'sequence_length': 5,
-        'batch_size': 1,
+        'batch_size': 3,
         'num_layers': 2,
         'dropout_rate': 0.2,
         'learning_rate': 1e-3,
@@ -103,8 +103,8 @@ def data_params():
         'sequence_length': 5,
         'num_tickers': 3,
         'feature_length': 10,
-        'timestamps': 10,
-        'batch_size': 1,
+        'timestamps': 15,
+        'batch_size': 2,
     }
 
 
@@ -149,146 +149,127 @@ def test_forward_pass_shape(model_params, data_params, tmp_path):
     assert torch.all((output >= 0) & (output <= 1))
 
 
-# def test_training_step(model_params, sample_batch, tmp_path):
-#     model = LSTMModel(**model_params)
-#     test_checkpoint_dir = tmp_path / 'test_checkpoint_dir'
-#     trainer = Trainer(default_root_dir=test_checkpoint_dir, max_epochs=1, log_every_n_steps=1)
-#     train_loader = DataLoader(TensorDataset(
-#         *sample_batch), batch_size=1, shuffle=False, num_workers=9, persistent_workers=True)
-#     # fit the model to initialize the Trainer logging hooks
-#     trainer.fit(model, train_loader)
-#     # run training step to test the loss computation
-#     # TODO: how does batch_idx work?
-#     loss = model.training_step(sample_batch, batch_idx=0)
+def test_configure_optimizers(model_params):
+    model = LSTMModel(**model_params)
+    optimizer = model.configure_optimizers()
 
-#     assert isinstance(loss, torch.Tensor)
-#     assert loss.requires_grad
-#     assert loss.item() >= 0
-#     assert not torch.isnan(loss)  # check if the loss is not NaN
-#     assert not torch.isinf(loss)  # check if the loss is not infinity
+    assert isinstance(optimizer, torch.optim.Adam)
+
+    for param_group in optimizer.param_groups:
+        assert param_group['lr'] == model_params['learning_rate']
+        assert param_group['betas'] == (0.9, 0.999)
+        assert param_group['eps'] == 1e-8
+        assert param_group['weight_decay'] == 0
+        assert param_group['amsgrad'] == False
+        assert param_group['params'] == list(model.parameters())
 
 
-# def test_configure_optimizers(model_params):
-#     model = LSTMModel(**model_params)
-#     optimizer = model.configure_optimizers()
+@pytest.mark.parametrize('batch_size', [1, 2, 4])
+def test_different_batch_sizes(model_params, batch_size):
+    model = LSTMModel(**model_params)
+    num_tickers = 3
+    sequence_length = model_params['sequence_length']
+    feature_length = model_params['feature_length']
 
-#     assert isinstance(optimizer, torch.optim.Adam)
-
-#     for param_group in optimizer.param_groups:
-#         assert param_group['lr'] == model_params['learning_rate']
-#         assert param_group['betas'] == (0.9, 0.999)
-#         assert param_group['eps'] == 1e-8
-#         assert param_group['weight_decay'] == 0
-#         assert param_group['amsgrad'] == False
-#         assert param_group['params'] == list(model.parameters())
-
-
-# @pytest.mark.parametrize('batch_size', [1, 2, 4])
-# def test_different_batch_sizes(model_params, batch_size):
-#     model = LSTMModel(**model_params)
-#     num_tickers = 3
-#     sequence_length = model_params['sequence_length']
-#     feature_length = model_params['input_size']
-
-#     in_tensor = torch.rand(
-#         (batch_size, num_tickers, sequence_length, feature_length))
-#     target_tensor = torch.randint(2, (batch_size, num_tickers, 1)).float()
-#     output = model(in_tensor)
-#     assert output.size() == (batch_size, num_tickers, 1)
+    in_tensor = torch.rand(
+        (batch_size, num_tickers, sequence_length, feature_length))
+    target_tensor = torch.randint(2, (batch_size, num_tickers, 1)).float()
+    output = model(in_tensor)
+    assert output.size() == (batch_size, num_tickers, 1)
 
 
-# @pytest.mark.parametrize('num_tickers', [1, 3, 5])
-# def test_different_ticker_counts(model_params, num_tickers):
-#     model = LSTMModel(**model_params)
-#     batch_size = 4
-#     sequence_length = model_params['sequence_length']
-#     feature_length = model_params['input_size']
+@pytest.mark.parametrize('num_tickers', [1, 3, 5])
+def test_different_ticker_counts(model_params, num_tickers):
+    model = LSTMModel(**model_params)
+    batch_size = 4
+    sequence_length = model_params['sequence_length']
+    feature_length = model_params['feature_length']
 
-#     in_tensor = torch.rand(
-#         (batch_size, num_tickers, sequence_length, feature_length))
-#     target_tensor = torch.randint(2, (batch_size, num_tickers, 1)).float()
-#     output = model(in_tensor)
-#     assert output.size() == (batch_size, num_tickers, 1)
-
-
-# @pytest.mark.parametrize('sequence_length', [3, 5, 7])
-# def test_different_sequence_lengths(model_params, sequence_length):
-#     model = LSTMModel(**model_params)
-#     batch_size = 4
-#     num_tickers = 3
-#     feature_length = model_params['input_size']
-
-#     in_tensor = torch.rand(
-#         (batch_size, num_tickers, sequence_length, feature_length))
-#     target_tensor = torch.randint(2, (batch_size, num_tickers, 1)).float()
-#     output = model(in_tensor)
-#     assert output.size() == (batch_size, num_tickers, 1)
+    in_tensor = torch.rand(
+        (batch_size, num_tickers, sequence_length, feature_length), dtype=torch.float32)
+    target_tensor = torch.randint(2, (batch_size, num_tickers, 1)).float()
+    output = model(in_tensor)
+    assert output.size() == (batch_size, num_tickers, 1)
 
 
-# @pytest.mark.parametrize('feature_length', [5, 10, 15])
-# def test_different_feature_lengths(model_params, feature_length):
-#     model_params_copy = model_params.copy()
-#     model_params_copy['input_size'] = feature_length
-#     model = LSTMModel(**model_params_copy)
-#     batch_size = 4
-#     num_tickers = 3
-#     sequence_length = model_params['sequence_length']
+@pytest.mark.parametrize('sequence_length', [3, 5, 7])
+def test_different_sequence_lengths(model_params, sequence_length):
+    model = LSTMModel(**model_params)
+    batch_size = 4
+    num_tickers = 3
+    feature_length = model_params['feature_length']
 
-#     in_tensor = torch.rand(
-#         (batch_size, num_tickers, sequence_length, feature_length))
-#     target_tensor = torch.randint(2, (batch_size, num_tickers, 1)).float()
-#     output = model(in_tensor)
-#     assert output.size() == (batch_size, num_tickers, 1)
+    in_tensor = torch.rand(
+        (batch_size, num_tickers, sequence_length, feature_length), dtype=torch.float32)
+    target_tensor = torch.randint(2, (batch_size, num_tickers, 1)).float()
+    output = model(in_tensor)
+    assert output.size() == (batch_size, num_tickers, 1)
 
 
-# def test_droupout_effect(model_params):
-#     model = LSTMModel(**model_params)
-#     in_tensor = torch.rand(
-#         (4, 3, model_params['sequence_length'], model_params['input_size']))
+@pytest.mark.parametrize('feature_length', [5, 10, 15])
+def test_different_feature_lengths(model_params, feature_length):
+    model_params_copy = model_params.copy()
+    model_params_copy['feature_length'] = feature_length
+    model = LSTMModel(**model_params_copy)
+    batch_size = 4
+    num_tickers = 3
+    sequence_length = model_params['sequence_length']
 
-#     # test in train mode
-#     model.train()
-#     out1 = model(in_tensor)
-#     out2 = model(in_tensor)
-#     # output should be different because of dropout
-#     assert not torch.allclose(out1, out2)
-
-#     # test in eval model
-#     model.eval()
-#     out3 = model(in_tensor)
-#     out4 = model(in_tensor)
-#     # output should be the same because dropout is turned off
-#     assert torch.allclose(out3, out4)
+    in_tensor = torch.rand(
+        (batch_size, num_tickers, sequence_length, feature_length))
+    target_tensor = torch.randint(2, (batch_size, num_tickers, 1)).float()
+    output = model(in_tensor)
+    assert output.size() == (batch_size, num_tickers, 1)
 
 
-# def test_edge_cases_zero_input_size(model_params):
-#     model_params_copy = model_params.copy()
-#     model_params_copy['input_size'] = 0
-#     model = LSTMModel(**model_params_copy)
-#     in_tensor = torch.rand((4, 3, model_params_copy['sequence_length'], 0))
-#     output = model(in_tensor)
-#     assert not torch.isnan(output).any()
+def test_droupout_effect(model_params):
+    model = LSTMModel(**model_params)
+    in_tensor = torch.rand(
+        (4, 3, model_params['sequence_length'], model_params['feature_length']))
+
+    # test in train mode
+    model.train()
+    out1 = model(in_tensor)
+    out2 = model(in_tensor)
+    # output should be different because of dropout
+    assert not torch.allclose(out1, out2)
+
+    # test in eval model
+    model.eval()
+    out3 = model(in_tensor)
+    out4 = model(in_tensor)
+    # output should be the same because dropout is turned off
+    assert torch.allclose(out3, out4)
 
 
-# def test_edge_cases_large_input_size(model_params):
-#     model_params_copy = model_params.copy()
-#     model_params_copy['input_size'] = 1000
-#     model = LSTMModel(**model_params_copy)
-#     in_tensor = torch.rand(
-#         (4, 3, model_params_copy['sequence_length'], 1000))
-#     output = model(in_tensor)
-#     assert not torch.isnan(output).any()
-#     # check if the output is a probability
-#     assert torch.all((output >= 0) & (output <= 1))
+def test_edge_cases_zero_feature_length(model_params):
+    model_params_copy = model_params.copy()
+    model_params_copy['feature_length'] = 0
+    model = LSTMModel(**model_params_copy)
+    in_tensor = torch.rand((4, 3, model_params_copy['sequence_length'], 0))
+    output = model(in_tensor)
+    assert not torch.isnan(output).any()
 
 
-# def test_learning_rate_override(model_params):
-#     model = LSTMModel(**model_params)
-#     optimizer = model.configure_optimizers()
-#     assert optimizer.param_groups[0]['lr'] == model_params['learning_rate']
+def test_edge_cases_large_feature_length(model_params):
+    model_params_copy = model_params.copy()
+    model_params_copy['feature_length'] = 1000
+    model = LSTMModel(**model_params_copy)
+    in_tensor = torch.rand(
+        (4, 3, model_params_copy['sequence_length'], 1000))
+    output = model(in_tensor)
+    assert not torch.isnan(output).any()
+    # check if the output is a probability
+    assert torch.all((output >= 0) & (output <= 1))
 
-#     model_params_copy = model_params.copy()
-#     model_params_copy['learning_rate'] = 1e-4
-#     model = LSTMModel(**model_params_copy)
-#     optimizer = model.configure_optimizers()
-#     assert optimizer.param_groups[0]['lr'] == model_params_copy['learning_rate']
+
+def test_learning_rate_override(model_params):
+    model = LSTMModel(**model_params)
+    optimizer = model.configure_optimizers()
+    assert optimizer.param_groups[0]['lr'] == model_params['learning_rate']
+
+    model_params_copy = model_params.copy()
+    model_params_copy['learning_rate'] = 1e-4
+    model = LSTMModel(**model_params_copy)
+    optimizer = model.configure_optimizers()
+    assert optimizer.param_groups[0]['lr'] == model_params_copy['learning_rate']
