@@ -4,7 +4,8 @@ import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 import pyarrow.dataset as ds
-from typing import Iterator, NamedTuple
+from typing import Iterator
+from dataclasses import dataclass
 from pathlib import Path
 import torch
 from ingestion.ingestion_utils import get_logger
@@ -20,10 +21,187 @@ from ingestion.ingestion_utils import get_logger
 
 logger = get_logger('preprocessing')
 
-class BatchData(NamedTuple):
+@dataclass
+class TensorMetadata:
+    ticker_idx: dict[str, int]
+    timestamp_idx: dict[str, int]
+    feature_names: list[str]
+    num_batches: int
+
+    def save(self, path: str) -> None:
+        torch.save(self, path)
+
+    @classmethod
+    def load(cls, path: str) -> TensorMetadata:
+        data = torch.load(path, weights_only=False)
+        return cls(**data)
+
+
+@dataclass
+class BatchData:
     tensor: torch.Tensor
     target: torch.Tensor
-    num_batches: torch.Tensor
+    metadata: TensorMetadata
+
+class DataFramePreprocessor:
+    @staticmethod
+    def convert_datatype(df: pd.DataFrame) -> pd.DataFrame:
+        """ Convert the data types of the columns.
+        Ticker should be string,
+        Date should be datetime,
+        Everything else should be float64 """
+        df['ticker'] = df['ticker'].astype('str')
+        df['date'] = pd.to_datetime(df['date'])
+        for column in df.columns:
+            if column not in ['ticker', 'date']:
+                df[column] = pd.to_numeric(df[column], errors='coerce')
+        df = df.dropna(how='all', axis=1)
+        return df
+
+    @staticmethod
+    def handle_missing_values(df: pd.DataFrame) -> pd.DataFrame:
+        """ Deal with missing values in the dataframe.
+        For now, we will forward fill the missing values. """
+        return df.groupby('ticker').ffill().fillna(0).reset_index()
+
+    @staticmethod
+    def drop_duplicates(df: pd.DataFrame) -> pd.DataFrame:
+        """ Drop duplicates from the dataframe. """
+        return df.drop_duplicates()
+
+    @staticmethod
+    def calculate_target_variable(df: pd.DataFrame, return_column: str = 'variacaopercent') -> pd.DataFrame:
+        """ The goal of the model is to predict the direction of the stock price.
+        Because of this, the target variable will be a binary variable that indicates
+        if the stock price will go up. This function will calculate the target
+        variable based on returns."""
+        df['target'] = df[return_column].gt(0).astype(float)
+        return df
+
+    def process_batch(self, df: pd.DataFrame) -> pd.DataFrame:
+        """ Process a batch of data. """
+        df = self.convert_datatype(df)
+        df = self.handle_missing_values(df)
+        df = self.drop_duplicates(df)
+        df = self.calculate_target_variable(df)
+        return df
+
+class IndexTracker:
+    def __init__(self):
+        self.ticker_idx: dict[str, int] = {}
+        self.timestamp_idx: dict[pd.Timestamp, int] = {}
+
+    def update_indices(self, df: pd.DataFrame) -> None:
+        for ticker in df['ticker'].unique():
+            if ticker not in self.ticker_idx:
+                self.ticker_idx[ticker] = len(self.ticker_idx)
+
+        for timestamp in df['date'].unique():
+            if timestamp not in self.timestamp_idx:
+                self.timestamp_idx[timestamp] = len(self.timestamp_idx)
+
+class TensorBuilder:
+    def __init__(self, feature_names: list[str]):
+        self.feature_names = feature_names
+
+    def build_tensors(
+        self,
+        df: pd.DataFrame,
+        ticker_idx: dict[str, int],
+        timestamp_idx: dict[pd.Timestamp, int],
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
+        batch_tensor = torch.zeros(len(ticker_idx),
+                                   len(timestamp_idx),
+                                   len(self.feature_names))
+        batch_target = torch.zeros(len(ticker_idx),
+                                   len(timestamp_idx),
+                                   1)
+        for row in df.itertuples(index=False):
+            ticker_index = ticker_idx[row.ticker]
+            timestamp_index = timestamp_idx[row.date]
+            batch_tensor[ticker_index, timestamp_index, :] = torch.tensor(
+                [getattr(row, feature) for feature in self.feature_names])
+            batch_target[ticker_index, timestamp_index, 0] = row.target
+        return batch_tensor, batch_target
+
+class TensorConverter:
+    EXCLUDED_COLUMNS = ['date', 'ticker', 'target', 'p/l', 
+    'despesa_de_depreciacao,_amortizacao_e_exaustao_3_meses_consolidado__milhoes']
+
+    def __init__(
+        self,
+        tensor_path: str = 'data/processed/tensor_batches',
+        target_path: str = 'data/processed/target_batches',
+        metadata_path: str = 'data/processed/metadata.pt',
+    ):
+        self.tensor_path = tensor_path
+        self.target_path = target_path
+        self.metadata_path = metadata_path
+        self.preprocessor = DataFramePreprocessor()
+        self.index_tracker = IndexTracker()
+        self.tensor_builder: TensorBuilder = None
+        self.batch_counter = 0
+
+        os.makedirs(tensor_path, exist_ok=True)
+        os.makedirs(target_path, exist_ok=True)
+
+    def _get_feature_names(self, df: pd.DataFrame) -> list[str]:
+        return [col for col in df.columns if col not in self.EXCLUDED_COLUMNS]
+
+    def _save_batch_tensors(
+        self, 
+        batch_tensor: torch.Tensor, 
+        batch_target: torch.Tensor
+    ) -> None:
+        torch.save(batch_tensor, f'{self.tensor_path}/tensor_{self.batch_counter}.pt')
+        torch.save(batch_target, f'{self.target_path}/target_{self.batch_counter}.pt')
+        self.batch_counter += 1
+
+    def _save_metadata(self) -> None:
+        metadata = TensorMetadata(
+            ticker_idx=self.index_tracker.ticker_idx,
+            timestamp_idx=self.index_tracker.timestamp_idx,
+            feature_names=self.tensor_builder.feature_names,
+            num_batches=self.batch_counter
+        )
+        metadata.save(self.metadata_path)
+
+    def _log_summary(self) -> None:
+        logger.info(
+            f'Number of batches: {self.batch_counter}\n'
+            f'{len(self.index_tracker.ticker_idx)} tickers found: '
+            f'{list(self.index_tracker.ticker_idx.keys())}\n'
+            f'{len(self.index_tracker.timestamp_idx)} timestamps found.\n'
+            f'Min and max timestamps: '
+            f'{min(self.index_tracker.timestamp_idx.keys())} '
+            f'and {max(self.index_tracker.timestamp_idx.keys())}'
+        )
+
+    def process_batch(self, batch: pa.RecordBatch) -> None:
+        df = batch.to_pandas()
+        df = self.preprocessor.process_batch(df)
+
+        if self.tensor_builder is None:
+            feature_names = self._get_feature_names(df)
+            self.tensor_builder = TensorBuilder(feature_names)
+
+        self.index_tracker.update_indices(df)
+        batch_tensor, batch_target = self.tensor_builder.build_tensors(
+            df,
+            self.index_tracker.ticker_idx,
+            self.index_tracker.timestamp_idx
+        )
+        self._save_batch_tensors(batch_tensor, batch_target)
+
+    def convert_to_tensor(
+        self,
+        data_generator: Iterator[pa.RecordBatch]
+    ) -> None:
+        for batch in data_generator:
+            self.process_batch(batch)
+        self._save_metadata()
+        self._log_summary()
+
 
 def read_data(
     folder_path: str | list[str],
@@ -76,137 +254,23 @@ def read_data(
     return dataset.to_batches(batch_size=batch_size)
 
 
-def convert_datatype(
-    df: pd.DataFrame
-) -> pd.DataFrame:
-    """ Convert the data types of the columns.
-    Ticker should be string,
-    Date should be datetime,
-    Everything else should be float64 """
-    df['ticker'] = df['ticker'].astype('str')
-    df['date'] = pd.to_datetime(df['date'])
-    for column in df.columns:
-        if column not in ['ticker', 'date']:
-            df[column] = pd.to_numeric(df[column], errors='coerce')
-    df = df.dropna(how='all', axis=1)
-    return df
-
-
-def calculate_target_variable(
-    df: pd.DataFrame,
-    return_column: str = 'variacaopercent'
-) -> None:
-    """ The goal of the model is to predict the direction of the stock price.
-    Because of this, the target variable will be a binary variable that indicates
-    if the stock price will go up. This function will calculate the target
-    variable based on returns."""
-    df['target'] = df[return_column] > 0
-    df['target'] = df['target'].astype('int8')
-
-
-def handle_missing_values(
-    df: pd.DataFrame
-) -> pd.DataFrame:
-    """ Deal with missing values in the dataframe.
-    For now, we will forward fill the missing values. d
-    """
-    return df.groupby('ticker').ffill().fillna(0).reset_index()
-
-
-def drop_duplicates(
-    df: pd.DataFrame
-) -> pd.DataFrame:
-    """ Drop duplicates from the dataframe. """
-    return df.drop_duplicates()
-
-
-def convert_to_tensor(
-    data_generator: Iterator[pa.RecordBatch],
-    tensor_path: str = 'data/processed/tensor_batches',
-    target_path: str = 'data/processed/target_batches'
-) -> None:
-    """ Convert the data generator to tensors in batches, 
-    saving intermediate results to disk."""
-    ticker_idx = {}
-    timestamp_idx = {}
-    feature_names = None
-    batch_counter = 0
-    os.makedirs(tensor_path, exist_ok=True)
-    os.makedirs(target_path, exist_ok=True)
-    for batch in data_generator:
-        batch_df = batch.to_pandas()
-        # Convert data types
-        batch_df = convert_datatype(batch_df)
-        # Handle missing values
-        batch_df = handle_missing_values(batch_df) # TODO: handle missing values from one batch to the next
-        # Drop duplicates
-        batch_df = drop_duplicates(batch_df)
-        # Calculate target variable
-        calculate_target_variable(batch_df)
-        if feature_names is None:
-            feature_names = [col for col in batch_df.columns if col not in [
-                'date', 'ticker', 'target',
-                # the last 2 are giving problems
-                'p/l', 'despesa_de_depreciacao,_amortizacao_e_exaustao_3_meses_consolidado__milhoes']]
-        for _, row in batch_df.iterrows():
-            ticker = row['ticker']
-            timestamp = row['date']
-            if ticker not in ticker_idx:
-                ticker_idx[ticker] = len(ticker_idx)
-            if timestamp not in timestamp_idx:
-                timestamp_idx[timestamp] = len(timestamp_idx)
-
-        # Create batch tensors
-        batch_tensor = torch.zeros(len(ticker_idx),
-                                   len(timestamp_idx),
-                                   len(feature_names))
-        batch_target = torch.zeros(len(ticker_idx),
-                                   len(timestamp_idx),
-                                   1)
-        for row in batch_df.itertuples(index=False):
-            ticker_index = ticker_idx[row.ticker]
-            timestamp_index = timestamp_idx[row.date]
-            batch_tensor[ticker_index, timestamp_index, :] = torch.tensor(
-                [getattr(row, feature) for feature in feature_names])
-            batch_target[ticker_index, timestamp_index, 0] = row.target
-
-        # Save tensors to disk
-        torch.save(batch_tensor, f'{tensor_path}/tensor_{batch_counter}.pt')
-        torch.save(batch_target, f'{target_path}/target_{batch_counter}.pt')
-        batch_counter += 1
-
-        # Save metadata to disk
-        metadata = {
-            'ticker_idx': ticker_idx,
-            'timestamp_idx': timestamp_idx,
-            'feature_names': feature_names,
-            'num_batches': batch_counter
-        }
-        torch.save(metadata, 'data/processed/metadata.pt')
-
-        # Clear memory
-        del batch_tensor
-        del batch_target
-        del batch_df
-    logger.info(
-        f'Number of batches: {batch_counter}\n'
-        f'{len(ticker_idx)} tickers found: {list(ticker_idx.keys())}\n'
-        f'{len(timestamp_idx)} timestamps found.\n'
-        f'Min and max timestamps: {min(timestamp_idx.keys())} and {max(timestamp_idx.keys())}'
-    )
-
-
 def load_tensors(
     tensor_path: str = 'data/processed/tensor_batches',
     target_path: str = 'data/processed/target_batches',
-    metadata_path: str = 'data/processed/metadata.pt'
-) -> Iterator[BatchData]:
+    metadata_path: str = 'data/processed/metadata.pt',
+    batches: bool = True,
+) -> Iterator[BatchData] | BatchData:
     """ Load the tensors from disk and return a generator to iterate over them. """
     metadata = torch.load('data/processed/metadata.pt', weights_only=False)
-    for i in range(num_batches):
-        tensor = torch.load(f'{tensor_path}/tensor_{i}.pt', weights_only=True)
-        target = torch.load(f'{target_path}/target_{i}.pt', weights_only=True)
-        yield tensor, target, metadata
+    if batches:
+        for i in range(metadata.num_batches):
+            tensor = torch.load(f'{tensor_path}/tensor_{i}.pt')
+            target = torch.load(f'{target_path}/target_{i}.pt')
+            yield BatchData(tensor=tensor, target=target, metadata=metadata)
+    else:
+        tensor = torch.load(f'{tensor_path}')
+        target = torch.load(f'{target_path}')
+        return BatchData(tensor=tensor, target=target, metadata=metadata)
 
 
 def preprocess_data(
