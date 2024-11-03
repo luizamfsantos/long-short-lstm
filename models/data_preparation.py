@@ -25,8 +25,8 @@ class TimeSeriesDataSingleBatch(Dataset):
         target_tensor: tensor with shape (num_tickers, timestamps, 1)
         """
         self.sequence_length = sequence_length 
-        self.input_tensor = torch.load(input_tensor_path) 
-        self.target_tensor = torch.load(target_tensor_path) 
+        self.input_tensor = torch.load(input_tensor_path).float() 
+        self.target_tensor = torch.load(target_tensor_path).float()
 
     def __len__(self):
         """ Returns the number of sequences in the dataset. 
