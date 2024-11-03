@@ -3,6 +3,9 @@
 # Test data ingestion
 python -m pytest tests/test_ingestion.py
 
+# Test data preprocessing
+python -m pytest tests/test_preprocessing.py
+
 # Test data preparation
 python -m pytest tests/test_data_preparation.py
 
