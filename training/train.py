@@ -1,3 +1,4 @@
+import os
 import torch
 import argparse
 from models.lstm_model import LSTMModel
@@ -44,15 +45,23 @@ def setup_training(config: dict) -> Tuple[LSTMModel, TimeSeriesDataModule, Train
 
 
 def main():
+    # parse arguments
     args = parse_arguments()
+    # get logger
     logger = get_logger()
     logger.info(f'Using torch {torch.__version__}')
-    config = get_config()  # get hyperparameters from config.yaml
+    # get hyperparameters from config.yaml
+    config = get_config()
+    # set seed
+    if not os.environ.get('SEED'):
+        os.environ['SEED'] = str(config.get('SEED', 42))
+    # setup training
     lstm, data_module = setup_training(config)
     training_manager = TrainingManager(config)
     if args.clear_checkpoints:
         training_manager.checkpoint_manager.clear_checkpoints()
     logger.info(f'Model initialized with hyperparameters: {lstm.hparams}')
+    # start training
     training_manager.train(
         model=lstm,
         data_module=data_module,
