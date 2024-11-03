@@ -9,6 +9,9 @@ import torch.nn.functional as F
 from torch.optim import Adam
 import lightning as L
 import os
+from training.train_utils import get_logger
+
+logger = get_logger()
 
 class LSTMModel(L.LightningModule):
 
@@ -94,7 +97,7 @@ class LSTMModel(L.LightningModule):
         input_i, target_i = batch # input_i is the input data, target_i is the target data
         output_i = self.forward(input_i) # (batch_size, num_tickers, 1)
         # calculate the loss across all tickers, compare the output to the last value in the sequence of the target
-        loss = self.hparams.criterion(output_i[:, :, -1, :], target_i[:, :, -1, :]) # (batch_size, num_tickers, 1)
+        loss = self.hparams.criterion(output_i[:, :, -1, :], target_i) # (batch_size, num_tickers, 1)
         self.log('train_loss', loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
         return loss
 
