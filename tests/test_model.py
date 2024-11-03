@@ -5,7 +5,10 @@ import lightning as L
 from lightning.pytorch import Trainer
 from torch.utils.data import DataLoader, TensorDataset, Dataset
 from models.lstm_model import LSTMModel
+import memory_profiler
+from training.train_utils import get_config
 
+config = get_config()
 
 class RandomDataset(Dataset):
     def __init__(
@@ -19,11 +22,12 @@ class RandomDataset(Dataset):
         self.num_tickers = num_tickers
         self.feature_length = feature_length
         self.data = torch.rand(
-            (num_tickers, timestamps, feature_length)
+            (num_tickers, timestamps, feature_length),
+            dtype=torch.float32
         )
         self.target = torch.randint(
             2,
-            (num_tickers, timestamps, 1))
+            (num_tickers, timestamps, 1)).float()
 
     def __getitem__(self, index: int) -> torch.Tensor:
         return self.data[:, index:index+self.sequence_length, :], \
@@ -64,23 +68,25 @@ class RandomDataModule(L.LightningDataModule):
 
     def train_dataloader(self):
         return DataLoader(self.train_data,
-                          batch_size=self.batch_size)
+                          batch_size=self.batch_size,
+                          num_workers=9)
 
     def test_dataloader(self):
         return DataLoader(self.test_data,
-                          batch_size=self.batch_size)
+                          batch_size=self.batch_size,
+                          num_workers=9)
 
 @pytest.fixture
 def model_params():
     return {
         'feature_length': 10,
-        'hidden_size': 20,
+        'hidden_size': 5,
         'sequence_length': 5,
         'batch_size': 1,
         'num_layers': 2,
         'dropout_rate': 0.2,
         'learning_rate': 1e-3,
-        'num_epochs': 100,
+        'num_epochs': 10,
     }
 
 @pytest.fixture
@@ -89,7 +95,7 @@ def data_params():
         'sequence_length': 5,
         'num_tickers': 3,
         'feature_length': 10,
-        'timestamps': 100,
+        'timestamps': 10,
         'batch_size': 1,
     }
 
@@ -111,12 +117,17 @@ def test_model_init(model_params):
     assert model.linear.in_features == model_params['hidden_size']
     assert model.linear.out_features == 1
 
-
-def test_forward_pass_shape(model_params):
+@memory_profiler.profile
+def test_forward_pass_shape(model_params, data_params, tmp_path):
     model = LSTMModel(**model_params)
-    trainer = Trainer()
-    data_module = RandomDataModule(**model_params)
-
+    trainer = Trainer(
+        devices='auto',
+        accelerator='cpu',
+        default_root_dir=tmp_path,
+        max_epochs=1,
+        log_every_n_steps=1)
+    data_module = RandomDataModule(**data_params)
+    trainer.fit(model, datamodule=data_module)
     # output = model(in_tensor)
 
     # batch_size, num_tickers, sequence_length, input_size = in_tensor.size()
