@@ -1,6 +1,6 @@
 SEED: 42 # random seed for reproducibility
 LSTM:
-  INPUT_SIZE: 26 # the number of features in the input data
+  FEATURE_LENGTH: 26 # the number of features in the input data
   HIDDEN_SIZE: 1 # the number of features in the hidden state
   SEQUENCE_LENGTH: 5 # the number of time steps in the input sequence
   BATCH_SIZE: 1 # the number of samples in each batch
