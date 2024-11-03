@@ -59,12 +59,6 @@ class DataFramePreprocessor:
         return df
 
     @staticmethod
-    def handle_missing_values(df: pd.DataFrame) -> pd.DataFrame:
-        """ Deal with missing values in the dataframe.
-        For now, we will forward fill the missing values. """
-        return df.groupby('ticker').ffill().fillna(0).reset_index()
-
-    @staticmethod
     def drop_duplicates(df: pd.DataFrame) -> pd.DataFrame:
         """ Drop duplicates from the dataframe. """
         return df.drop_duplicates()
@@ -81,7 +75,6 @@ class DataFramePreprocessor:
     def process_batch(self, df: pd.DataFrame) -> pd.DataFrame:
         """ Process a batch of data. """
         df = self.convert_datatype(df)
-        df = self.handle_missing_values(df)
         df = self.drop_duplicates(df)
         df = self.calculate_target_variable(df)
         return df
@@ -92,7 +85,7 @@ class IndexTracker:
         self.timestamp_idx: dict[pd.Timestamp, int] = {}
 
     def update_indices(self, df: pd.DataFrame) -> None:
-        for ticker in df['ticker'].unique():
+        for ticker in df['ticker'].unique().tolist():
             if ticker not in self.ticker_idx:
                 self.ticker_idx[ticker] = len(self.ticker_idx)
 
