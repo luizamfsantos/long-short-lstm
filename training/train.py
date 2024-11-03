@@ -73,7 +73,8 @@ def main():
         devices=config.get('DEVICES', 'auto'),
         accelerator=config.get('ACCELERATOR', 'auto'),
         default_root_dir=config.get('ROOT_DIR', 'checkpoints'),
-        callbacks=[checkpoint_callback]
+        callbacks=[checkpoint_callback],
+        max_epochs=config.get('NUM_EPOCHS', 100),
     )
 
     data_module = TimeSeriesDataModule(
