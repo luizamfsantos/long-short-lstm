@@ -78,8 +78,6 @@ class LSTMModel(L.LightningModule):
             linear_out = self.linear(last_output) # (batch_size, 1)
             # transform the output into a probability: remember binary classification!
             prediction = self.activation(linear_out) # (batch_size, 1)
-            # add singleton dimension for stacking
-            prediction = prediction.unsqueeze(1) # (batch_size, 1, 1)
             ticker_outputs.append(prediction)
 
         # stack the predictions for all tickers
@@ -97,13 +95,13 @@ class LSTMModel(L.LightningModule):
         input_i, target_i = batch # input_i is the input data, target_i is the target data
         output_i = self.forward(input_i) # (batch_size, num_tickers, 1)
         # calculate the loss across all tickers, compare the output to the last value in the sequence of the target
-        loss = self.hparams.criterion(output_i[:, :, -1, :], target_i) # (batch_size, num_tickers, 1)
+        loss = self.hparams.criterion(output_i, target_i) # (batch_size, num_tickers, 1)
         self.log('train_loss', loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
         return loss
 
     def test_step(self, batch: [torch.Tensor, torch.Tensor], batch_idx: int):
         input_i, target_i = batch
         output_i = self.forward(input_i)
-        loss = self.hparams.criterion(output_i[:, :, -1, :], target_i[:, :, -1, :])
+        loss = self.hparams.criterion(output_i, target_i)
         self.log('test_loss', loss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
         return loss

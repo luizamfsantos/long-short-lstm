@@ -5,10 +5,10 @@ import lightning as L
 from lightning.pytorch import Trainer
 from torch.utils.data import DataLoader, TensorDataset, Dataset
 from models.lstm_model import LSTMModel
-import memory_profiler
 from training.train_utils import get_config
 
 config = get_config()
+
 
 class RandomDataset(Dataset):
     def __init__(
@@ -30,15 +30,21 @@ class RandomDataset(Dataset):
             (num_tickers, timestamps, 1)).float()
 
     def __getitem__(self, index: int) -> torch.Tensor:
+        """ Returns:
+         in_tensor: shape (num_tickers, sequence_length, feature_length)
+        target: shape (num_tickers, 1)"""
         return self.data[:, index:index+self.sequence_length, :], \
             self.target[:, index+self.sequence_length, :]
 
     def __len__(self) -> int:
+        """ Returns: number of samples in the dataset 
+        with length equal to sequence_length"""
         return self.data.size(1) - self.sequence_length
+
 
 class RandomDataModule(L.LightningDataModule):
     def __init__(
-        self, 
+        self,
         sequence_length: int,
         num_tickers: int,
         feature_length: int,
@@ -76,6 +82,7 @@ class RandomDataModule(L.LightningDataModule):
                           batch_size=self.batch_size,
                           num_workers=9)
 
+
 @pytest.fixture
 def model_params():
     return {
@@ -88,6 +95,7 @@ def model_params():
         'learning_rate': 1e-3,
         'num_epochs': 10,
     }
+
 
 @pytest.fixture
 def data_params():
@@ -117,7 +125,7 @@ def test_model_init(model_params):
     assert model.linear.in_features == model_params['hidden_size']
     assert model.linear.out_features == 1
 
-@memory_profiler.profile
+
 def test_forward_pass_shape(model_params, data_params, tmp_path):
     model = LSTMModel(**model_params)
     trainer = Trainer(
@@ -128,14 +136,17 @@ def test_forward_pass_shape(model_params, data_params, tmp_path):
         log_every_n_steps=1)
     data_module = RandomDataModule(**data_params)
     trainer.fit(model, datamodule=data_module)
-    # output = model(in_tensor)
 
-    # batch_size, num_tickers, sequence_length, input_size = in_tensor.size()
-    # expected_shape = (batch_size, num_tickers, 1)
+    # check if the forward pass works
+    in_tensor, target_tensor = next(iter(data_module.train_dataloader()))
+    output = model(in_tensor)
 
-    # assert output.size() == expected_shape
-    # # check if the output is a probability
-    # assert torch.all((output >= 0) & (output <= 1))
+    batch_size, num_tickers, sequence_length, input_size = in_tensor.size()
+    expected_shape = (batch_size, num_tickers, 1)
+
+    assert output.size() == expected_shape
+    # check if the output is a probability
+    assert torch.all((output >= 0) & (output <= 1))
 
 
 # def test_training_step(model_params, sample_batch, tmp_path):
