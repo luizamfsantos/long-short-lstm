@@ -104,13 +104,15 @@ class TimeSeriesDataModule(L.LightningDataModule):
         """ Returns a DataLoader for the training data. """
         return DataLoader(self.train_data,
                           batch_size=self.batch_size,
-                          shuffle=False)
+                          shuffle=False,
+                          num_workers=9)
 
     def test_dataloader(self):
         """ Returns a DataLoader for the test data. """
         return DataLoader(self.test_data,
                           batch_size=self.batch_size,
-                          shuffle=False)
+                          shuffle=False,
+                          num_workers=9)
 
 # example usage
 # data_module = TimeSeriesDataModule()
