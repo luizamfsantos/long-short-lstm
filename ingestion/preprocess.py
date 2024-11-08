@@ -58,6 +58,13 @@ class DataFramePreprocessor:
         df = df.dropna(how='all', axis=1)
         return df
 
+    # TODO: fix this function
+    # @staticmethod
+    # def handle_missing_values(df: pd.DataFrame) -> pd.DataFrame:
+    #     """ Deal with missing values in the dataframe.
+    #     For now, we will forward fill the missing values. """
+    #     return df.groupby('ticker').apply(lambda group: group.ffill()).reset_index(drop=False)
+
     @staticmethod
     def drop_duplicates(df: pd.DataFrame) -> pd.DataFrame:
         """ Drop duplicates from the dataframe. """
@@ -77,12 +84,19 @@ class DataFramePreprocessor:
         df = self.convert_datatype(df)
         df = self.drop_duplicates(df)
         df = self.calculate_target_variable(df)
+        # df = self.handle_missing_values(df)
         return df
 
 class IndexTracker:
-    def __init__(self):
-        self.ticker_idx: dict[str, int] = {}
-        self.timestamp_idx: dict[pd.Timestamp, int] = {}
+    def __init__(self, ticker_idx: dict[str, int] = None, timestamp_idx: dict[pd.Timestamp, int] = None):
+        if ticker_idx is None:
+            self.ticker_idx: dict[str, int] = {}
+        else:
+            self.ticker_idx: dict[str, int] = ticker_idx
+        if timestamp_idx is None:
+            self.timestamp_idx: dict[pd.Timestamp, int] = {}
+        else:
+            self.timestamp_idx: dict[pd.Timestamp, int] = timestamp_idx
 
     def update_indices(self, df: pd.DataFrame) -> None:
         for ticker in df['ticker'].unique().tolist():

@@ -25,7 +25,7 @@ B. Create model bucket
 [ X ] Choose optimizer and loss function
 
 C. Train model bucket
-[   ] Split data into training and validation sets for sliding windows
+[ X ] Split data into training and validation sets for sliding windows
 [   ] Implement early stopping/callbacks
 [   ] Train on historical data
 [   ] Save training checkpoints
