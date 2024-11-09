@@ -20,4 +20,4 @@ class StrategyInterface(Protocol):
         """
         Check if it is a valid return.
         """
-        return all([c in weights.columns.values for c in ['date', 'ticker', 'weights']])
+        return all([c in weights.columns.values for c in ['date', 'ticker', 'weights', 'position']])

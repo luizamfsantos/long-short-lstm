@@ -1,3 +1,4 @@
+import torch
 import pandas as pd
 import numpy as np
 from typing import Dict, Tuple
@@ -9,7 +10,8 @@ from simulator.strategy_interface import StrategyInterface
 def strategy_simulator(
     path: str, 
     strategy: StrategyInterface,
-    data: Dict[str, pd.DataFrame], 
+    return_list: list[torch.Tensor], 
+    forecast: list[torch.Tensor],
     t: int,
     ret_port: pd.Series, 
     weights_db: pd.DataFrame, 
@@ -21,8 +23,8 @@ def strategy_simulator(
     Args:
         path (string): path to save strategy data
         strategy (StrategyInterface): Strategy according to the StrategyInterface
-        data (dict): Dictionary containing necessary data.
-        forecast (torch.Tensor): predictions for each stock.
+        return_list (list[torch.Tensor]): list of tensors with returns for each stock.
+        forecast (list[torch.Tensor]): predictions for each stock.
         t (int): Time value for calculation.
         ret_port (pd.Series): Accumulated portfolio returns.
         weights_db (pd.DataFrame): Accumulated weights database.
@@ -48,6 +50,7 @@ def strategy_simulator(
     weights_index.index = weights.ticker
     ret_port[prices.index[t]] = returns_1 @ weights_index
 
+    # Save the portfolio returns
     aux = ret_port.reset_index()
     aux.columns = ['date', 'ret_port']
     aux.to_parquet(path + "ret_port.parquet")

@@ -1,11 +1,12 @@
 import argparse
 import pandas as pd
 import quantstats as qs
+import torch
 from trading.long_short_strategy import LongShortStrategy
 from simulator.strategy_simulator import strategy_simulator
 from models.lstm_model import LSTMModel
 from simulator.simulator_utils import get_config, get_logger
-from ingestion.preprocess import load_tensors
+from models.data_preparation import TimeSeriesDataModule
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Run the trading simulation')
@@ -26,11 +27,14 @@ def main():
     # Get configuration
     config = get_config()
 
-    # Load test data and metadata
-    data = load_tensors() # TODO: split data into train and test
+    # Load data 
+    data_module = TimeSeriesDataModule(
+        batch_size=1,
+        sequence_length=config.get('SEQUENCE_LENGTH', 5),
+    )
 
     # Load last model checkpoint
-    model = LSTMModel.load_from_checkpoint(args.ckpt)
+    model = LSTMModel.load_from_checkpoint(args.ckpt).to('cpu')
     model.eval()
 
     # Create object of LongShortStrategy
@@ -46,15 +50,35 @@ def main():
     # loop through a range of time values
     simulation_days = config.get('SIMULATION_DAYS', 100)
     logger.info(f'Running simulation for {simulation_days} days')
-    for t in range(1, simulation_days):
-        forecast = model(data) # TODO: adjust to use number of days for sequence_length
+    
+    # Prepare the dataloader for the test dataset
+    data_module.setup()
+    test_dataloader = data_module.test_dataloader()
+
+    # Run inference on the test dataset
+    # TODO: make this automatic later, but for now in the input_sequence,
+    # the 2nd value in the feature vector is the return of the previous day
+    return_list = []
+    all_predictions = [] # idx: timestamp, [num_stocks] tensor float (0, 1)
+    with torch.no_grad():
+        # num_batch = 1
+        for batch in test_dataloader:
+            input_sequence, _ = batch # [1, num_tickers, seq_len, num_features]
+            return_list.append(input_sequence[:, :, -1, 1].squeeze()) # [1, num_tickers]
+            prediction = model(input_sequence) # [1, num_tickers, 1]
+            prediction = prediction.squeeze() # [num_tickers]
+            all_predictions.append(prediction)
+    return_list.pop(0) # remove the first day so it represents the returns of the day it predicts
+    number_of_predictions = len(all_predictions)
+    assert number_of_predictions == simulation_days - 2, 'Simulation days is longer than the test dataset'
+    for t in range(number_of_predictions - simulation_days - 2, number_of_predictions - 2):
         # use the strategy simulator to get portfolio's historical weights [weights_db]
         # and its next day returns [ret_port]
         ret_port, weights_db = strategy_simulator(
             path='results/',
             strategy=strategy,
-            forecast=forecast,
-            data=data,
+            forecast=all_predictions[t],
+            return_list=return_list[t],
             t=t,
             ret_port=ret_port,
             weights_db=weights_db
