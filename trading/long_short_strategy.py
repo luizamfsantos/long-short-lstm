@@ -41,21 +41,21 @@ class LongShortStrategy(StrategyInterface):
         # to be long and short
         long_count = min(self.long_count, long_predictions)
         short_count = min(self.short_count, short_predictions)
-        
-        ticker_idx = {v: k for k, v in metadata['ticker_idx'].items()} # TODO: I'll have to commit metadata.pt to the repo
+        ticker_idx = {str(v): k for k, v in metadata['ticker_idx'].items()} # TODO: I'll have to commit metadata.pt to the repo
+        assert isinstance(ticker_idx, dict), 'ticker_idx is not a dictionary'
         # Select the top and bottom stocks
         # TODO: idea modify weights so that it uses the confidence of the prediction
         # to determine the weight of the stock
         if long_count > 0:
             top_stocks_idx = np.argsort(forecast, axis=0)[-long_count:]
-            top_stocks_names = ticker_idx[top_stocks_idx]
+            top_stocks_names = [ticker_idx.get(key) for key in top_stocks_idx.astype(str).tolist()]
             top_stocks = pd.DataFrame(
             {'ticker': top_stocks_names, 'weights': 1, 'date': t, 'position': 'long', 'idx': top_stocks_idx})
         else:
             top_stocks = pd.DataFrame(columns=['ticker', 'weights', 'date', 'position', 'idx'])
         if short_count > 0:
             bottom_stocks_idx = np.argsort(forecast, axis=0)[:short_count]
-            bottom_stocks_names = ticker_idx[bottom_stocks_idx]
+            bottom_stocks_names = [ticker_idx.get(key) for key in bottom_stocks_idx.astype(str).tolist()]
             bottom_stocks = pd.DataFrame(
                 {'ticker': bottom_stocks_names, 'weights': 1, 'date': t, 'position': 'short', 'idx': bottom_stocks_idx})
         else:

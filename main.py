@@ -14,6 +14,10 @@ def parse_arguments():
                         type=str,
                         default='checkpoints/last.ckpt',
                         help='Path to the model checkpoint')
+    parser.add_argument('--metadata',
+                        type=str,
+                        default='data/processed/metadata.pt',
+                        help='Path to the metadata file')
     return parser.parse_args()
 
 def main():
@@ -32,6 +36,9 @@ def main():
         batch_size=1,
         sequence_length=config.get('SEQUENCE_LENGTH', 5),
     )
+
+    # Load metadata
+    metadata = torch.load(args.metadata)
 
     # Load last model checkpoint
     model = LSTMModel.load_from_checkpoint(args.ckpt).to('cpu')
@@ -70,7 +77,7 @@ def main():
             all_predictions.append(prediction)
     return_list.pop(0) # remove the first day so it represents the returns of the day it predicts
     number_of_predictions = len(all_predictions)
-    assert number_of_predictions == simulation_days - 2, 'Simulation days is longer than the test dataset'
+    assert number_of_predictions - 2 >= simulation_days, 'Simulation days is longer than the test dataset'
     for t in range(number_of_predictions - simulation_days - 2, number_of_predictions - 2):
         # use the strategy simulator to get portfolio's historical weights [weights_db]
         # and its next day returns [ret_port]
@@ -81,7 +88,8 @@ def main():
             returns_ts=return_list[t],
             t=t,
             ret_port=ret_port,
-            weights_db=weights_db
+            weights_db=weights_db,
+            metadata=metadata
         )
 
     # Generate the performance report
@@ -90,9 +98,9 @@ def main():
     ret_port.set_index('date', inplace=True)
     ret_port = ret_port['ret_port']
     qs.reports.html(ret_port, '^BVSP', text_description="""
-    <p> Demonstration of a simple strategy</p>
+    <p> Long Short Trading Strategy</p>
     <p><strong>Important:</strong> Trading costs, taxes, and other fees were not considered in this simulation.</p>
-    """)
+    """, output='results/performance_report.html')
 
 
 if __name__ == '__main__':

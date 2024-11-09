@@ -14,3 +14,5 @@ SIMULATOR:
   SHORT_COUNT: 10 # the number of short positions to take
   LONG_COUNT: 10 # the number of long positions to take
   SIMULATION_DAYS: 100 # the number of days to simulate
+  BATCH_SIZE: 1 # the number of samples in each batch
+  SEQUENCE_LENGTH: 5 # the number of time steps in the input sequence

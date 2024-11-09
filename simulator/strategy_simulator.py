@@ -15,6 +15,7 @@ def strategy_simulator(
     t: int,
     ret_port: pd.Series, 
     weights_db: pd.DataFrame, 
+    metadata: dict,
     **kwargs
     ) -> Tuple[pd.Series, pd.DataFrame]:
     """
@@ -36,14 +37,14 @@ def strategy_simulator(
     os.makedirs(path, exist_ok=True)
 
     # Calculate the weights for the specified t value
-    weights = strategy.calculate_next_weights(forecast, t=t) # weights.columns = ['ticker', 'weights', 'date', 'position']
+    weights = strategy.calculate_next_weights(forecast_ts, t=t, metadata=metadata, **kwargs) # weights.columns = ['ticker', 'weights', 'date', 'position']
 
     # Save a weights database
     weights_db = pd.concat([weights_db, weights], axis=0)
     weights_db.to_parquet(path + "weights_db.parquet")
 
     # Calculate the portfolio returns for the specified t value
-    weights['returns'] = returns_ts[weights['idx'].values].numpy()
+    weights['returns'] = returns_ts[weights['idx'].values.astype(int)].numpy()
     weights.loc[weights['position'] == 'short', 'returns'] *= -1
     weights['returns'] *= weights['weights']
     
