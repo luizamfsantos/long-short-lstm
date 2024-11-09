@@ -1,3 +1,4 @@
+import argparse
 import pandas as pd
 import quantstats as qs
 from trading.long_short_strategy import LongShortStrategy
@@ -6,10 +7,21 @@ from models.lstm_model import LSTMModel
 from simulator.simulator_utils import get_config, get_logger
 from ingestion.preprocess import load_tensors
 
+def parse_arguments():
+    parser = argparse.ArgumentParser(description='Run the trading simulation')
+    parser.add_argument('--ckpt',
+                        type=str,
+                        default='checkpoints/last.ckpt',
+                        help='Path to the model checkpoint')
+    return parser.parse_args()
+
 def main():
     # Get logger
     logger = get_logger()
     logger.info('Starting simulation')
+
+    # Parse arguments
+    args = parse_arguments()
 
     # Get configuration
     config = get_config()
@@ -18,7 +30,7 @@ def main():
     data = load_tensors() # TODO: split data into train and test
 
     # Load last model checkpoint
-    model = LSTMModel.load_from_checkpoint('checkpoints/lstm_model.ckpt')
+    model = LSTMModel.load_from_checkpoint(args.ckpt)
     model.eval()
 
     # Create object of LongShortStrategy
@@ -33,7 +45,7 @@ def main():
 
     # loop through a range of time values
     simulation_days = config.get('SIMULATION_DAYS', 100)
-    logging.info(f'Running simulation for {simulation_days} days')
+    logger.info(f'Running simulation for {simulation_days} days')
     for t in range(1, simulation_days):
         forecast = model(data) # TODO: adjust to use number of days for sequence_length
         # use the strategy simulator to get portfolio's historical weights [weights_db]
