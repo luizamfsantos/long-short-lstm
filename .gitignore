@@ -8,6 +8,7 @@ data/**/**.parquet
 data/**/**.json
 data/**/**.zip
 data/**/**.pt
+results/**.parquet
 
 # Don't commit __pycache__ 
 **/__pycache__
