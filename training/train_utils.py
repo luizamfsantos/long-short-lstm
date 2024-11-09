@@ -5,7 +5,7 @@ import shutil
 from pathlib import Path
 import torch
 from models.lstm_model import LSTMModel
-from lightning.pytorch import Trainer
+from lightning.pytorch import Trainer, loggers
 from lightning.pytorch.callbacks import ModelCheckpoint
 from models.data_preparation import TimeSeriesDataModule
 
@@ -47,14 +47,15 @@ class TrainingManager:
             mode='min',
             save_top_k=3
         )
+        tb_logger = loggers.TensorBoardLogger(save_dir="logs/")
         self.trainer = Trainer(
             max_epochs=self.config.get('NUM_EPOCHS', 100),
             devices=self.config.get('DEVICES', 'auto'),
             accelerator=self.config.get('ACCELERATOR', 'auto'),
             callbacks=[self.checkpoint_callback],
             default_root_dir=checkpoint_dir,
-            enable_progress_bar=False,
-            logger=False
+            enable_progress_bar=True,
+            logger=tb_logger
         )
 
     def train(

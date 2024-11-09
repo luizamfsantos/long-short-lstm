@@ -1,0 +1,10 @@
+batch_size: 1
+criterion: !!python/name:torch.nn.functional.binary_cross_entropy ''
+dropout_rate: 0.0
+feature_length: 26
+hidden_size: 1
+learning_rate: 0.001
+num_epochs: 10
+num_layers: 1
+seed: 42
+sequence_length: 5
