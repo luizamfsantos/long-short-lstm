@@ -1,6 +1,7 @@
 import os
 import torch
 import argparse
+from typing import Tuple
 from models.lstm_model import LSTMModel
 import torch.nn.functional as F
 from lightning.pytorch import Trainer
@@ -37,9 +38,8 @@ def setup_training(config: dict) -> Tuple[LSTMModel, TimeSeriesDataModule, Train
         criterion=config.get('CRITERION', F.binary_cross_entropy)
     )
     data_module = TimeSeriesDataModule(
-        sequence_length=config['SEQUENCE_LENGTH'],
-        feature_length=config['FEATURE_LENGTH'],
         batch_size=config.get('BATCH_SIZE', 1),
+        sequence_length=config.get('SEQUENCE_LENGTH', 5),
     )
     return model, data_module
 

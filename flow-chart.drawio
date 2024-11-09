@@ -1,4 +1,4 @@
-<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36" version="24.8.1">
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36" version="24.8.3" pages="2">
   <diagram name="Page-1" id="ScXx_QTe2jNqYj3CX0Ws">
     <mxGraphModel dx="2584" dy="2486" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="850" pageHeight="1100" background="#D4E1F5" math="0" shadow="0">
       <root>
@@ -296,6 +296,71 @@
         </mxCell>
         <mxCell id="f2r01Bv7eAkKPC_8rpOf-198" value="output Tearsheet.html" style="rounded=1;whiteSpace=wrap;html=1;absoluteArcSize=1;arcSize=14;strokeWidth=2;" vertex="1" parent="1">
           <mxGeometry x="1010" y="509" width="100" height="100" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram name="Model Architecture" id="tNtkmupVo7oXSBZEvAiZ">
+    <mxGraphModel dx="1006" dy="859" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="850" pageHeight="1100" background="#D4E1F5" math="0" shadow="0">
+      <root>
+        <mxCell id="DqpwkbMlb_3uHLsgdLLP-0" />
+        <mxCell id="DqpwkbMlb_3uHLsgdLLP-1" parent="DqpwkbMlb_3uHLsgdLLP-0" />
+        <mxCell id="DqpwkbMlb_3uHLsgdLLP-25" value="" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="DqpwkbMlb_3uHLsgdLLP-1">
+          <mxGeometry x="-234" y="181" width="938" height="480" as="geometry" />
+        </mxCell>
+        <mxCell id="DqpwkbMlb_3uHLsgdLLP-26" value="Return Trend Forecasting&lt;div&gt;Model Architecture&lt;/div&gt;" style="text;strokeColor=none;align=center;fillColor=none;html=1;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="DqpwkbMlb_3uHLsgdLLP-1">
+          <mxGeometry x="-227" y="206" width="100" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="DqpwkbMlb_3uHLsgdLLP-27" value="" style="group" vertex="1" connectable="0" parent="DqpwkbMlb_3uHLsgdLLP-1">
+          <mxGeometry x="454" y="372" width="90" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="DqpwkbMlb_3uHLsgdLLP-28" value="" style="verticalLabelPosition=bottom;verticalAlign=top;html=1;shape=mxgraph.flowchart.on-page_reference;" vertex="1" parent="DqpwkbMlb_3uHLsgdLLP-27">
+          <mxGeometry width="90" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="DqpwkbMlb_3uHLsgdLLP-29" value="" style="shape=image;verticalLabelPosition=bottom;labelBackgroundColor=default;verticalAlign=top;aspect=fixed;imageAspect=0;image=https://static.thenounproject.com/png/4823543-200.png;" vertex="1" parent="DqpwkbMlb_3uHLsgdLLP-27">
+          <mxGeometry x="7.75" y="5.75" width="74.5" height="74.5" as="geometry" />
+        </mxCell>
+        <mxCell id="DqpwkbMlb_3uHLsgdLLP-30" value="" style="group" vertex="1" connectable="0" parent="DqpwkbMlb_3uHLsgdLLP-1">
+          <mxGeometry x="315" y="372" width="90" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="DqpwkbMlb_3uHLsgdLLP-31" value="" style="verticalLabelPosition=bottom;verticalAlign=top;html=1;shape=mxgraph.flowchart.on-page_reference;" vertex="1" parent="DqpwkbMlb_3uHLsgdLLP-30">
+          <mxGeometry width="90" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="DqpwkbMlb_3uHLsgdLLP-32" value="" style="shape=image;verticalLabelPosition=bottom;labelBackgroundColor=default;verticalAlign=top;aspect=fixed;imageAspect=0;image=https://static.thenounproject.com/png/3911638-200.png;" vertex="1" parent="DqpwkbMlb_3uHLsgdLLP-30">
+          <mxGeometry x="11" y="17" width="69" height="69" as="geometry" />
+        </mxCell>
+        <mxCell id="DqpwkbMlb_3uHLsgdLLP-33" value="" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="DqpwkbMlb_3uHLsgdLLP-1">
+          <mxGeometry x="-196" y="270" width="433" height="294" as="geometry" />
+        </mxCell>
+        <mxCell id="DqpwkbMlb_3uHLsgdLLP-34" value="" style="shape=image;verticalLabelPosition=bottom;labelBackgroundColor=default;verticalAlign=top;aspect=fixed;imageAspect=0;image=https://docs.pymor.org/main/_images/lstm_cell.svg;" vertex="1" parent="DqpwkbMlb_3uHLsgdLLP-1">
+          <mxGeometry x="-179.99857142857132" y="279.9957142857147" width="351" height="258" as="geometry" />
+        </mxCell>
+        <mxCell id="DqpwkbMlb_3uHLsgdLLP-35" value="LSTM Cell" style="text;strokeColor=none;align=center;fillColor=none;html=1;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="DqpwkbMlb_3uHLsgdLLP-1">
+          <mxGeometry x="-189" y="273" width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="DqpwkbMlb_3uHLsgdLLP-36" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="DqpwkbMlb_3uHLsgdLLP-1" source="DqpwkbMlb_3uHLsgdLLP-33" target="DqpwkbMlb_3uHLsgdLLP-31">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="DqpwkbMlb_3uHLsgdLLP-37" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="DqpwkbMlb_3uHLsgdLLP-1" source="DqpwkbMlb_3uHLsgdLLP-31" target="DqpwkbMlb_3uHLsgdLLP-28">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="DqpwkbMlb_3uHLsgdLLP-38" value="" style="strokeWidth=2;html=1;shape=mxgraph.flowchart.annotation_2;align=left;labelPosition=right;pointerEvents=1;" vertex="1" parent="DqpwkbMlb_3uHLsgdLLP-1">
+          <mxGeometry x="547" y="367" width="50" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="DqpwkbMlb_3uHLsgdLLP-39" value="Return will go up" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="DqpwkbMlb_3uHLsgdLLP-1">
+          <mxGeometry x="599" y="329" width="83" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="DqpwkbMlb_3uHLsgdLLP-40" value="Return will go down or stay the same" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="DqpwkbMlb_3uHLsgdLLP-1">
+          <mxGeometry x="599" y="429" width="83" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="sCO2r1mBODxSLKj3T70V-0" value="" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="DqpwkbMlb_3uHLsgdLLP-1">
+          <mxGeometry x="-221" y="715" width="433" height="294" as="geometry" />
+        </mxCell>
+        <mxCell id="sCO2r1mBODxSLKj3T70V-1" value="LSTM Cell" style="text;strokeColor=none;align=center;fillColor=none;html=1;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="DqpwkbMlb_3uHLsgdLLP-1">
+          <mxGeometry x="-214" y="718" width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="sCO2r1mBODxSLKj3T70V-2" value="" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="DqpwkbMlb_3uHLsgdLLP-1">
+          <mxGeometry x="-138" y="790" width="244" height="135" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>

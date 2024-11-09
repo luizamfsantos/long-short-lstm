@@ -9,9 +9,6 @@ import torch.nn.functional as F
 from torch.optim import Adam
 import lightning as L
 import os
-from training.train_utils import get_logger
-
-logger = get_logger()
 
 class LSTMModel(L.LightningModule):
 
