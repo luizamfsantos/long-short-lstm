@@ -45,7 +45,7 @@ def main():
 
     # initialize data structures to store results
     ret_port = pd.Series(dtype=float)
-    weights_db = pd.DataFrame(columns=['date', 'ticker', 'weights'])
+    weights_db = pd.DataFrame(columns=['date', 'ticker', 'weights', 'position', 'idx'])
 
     # loop through a range of time values
     simulation_days = config.get('SIMULATION_DAYS', 100)
