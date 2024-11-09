@@ -1,5 +1,6 @@
 from simulator.strategy_interface import StrategyInterface
 import pandas as pd
+import numpy as np
 
 
 class LongShortStrategy(StrategyInterface):
@@ -14,6 +15,7 @@ class LongShortStrategy(StrategyInterface):
             forecast,
             metadata,
             t,
+            threshold: float = 0.01,
             **kwargs):
         """
         Calculate the weights for the next period.
@@ -28,29 +30,41 @@ class LongShortStrategy(StrategyInterface):
         Returns:
             pd.DataFrame: Weights for the next period.
         """
-        # Ensure that long_count and short_count are smaller than the number of stocks
-        forecast_length = forecast.shape[0]
-        if self.long_count > forecast_length or self.short_count > forecast_length:
-            long_count = forecast_length // 2  # top half
-            short_count = forecast_length - long_count  # bottom half
-        else:
-            long_count = self.long_count
-            short_count = self.short_count
+        forecast = forecast.numpy()
+        # uncertainty = 0.5
+        # long_predictions = forecast > 0.5 + threshold
+        long_predictions = (forecast > 0.5 + threshold).sum()
+        # short_predictions = forecast < 0.5 - threshold
+        short_predictions = (forecast < 0.5 - threshold).sum()
+        # Ensure that long_count and short_count 
+        # are smaller than the number of stocks predicted
+        # to be long and short
+        long_count = min(self.long_count, long_predictions)
+        short_count = min(self.short_count, short_predictions)
         
+        ticker_idx = {v: k for k, v in metadata['ticker_idx'].items()} # TODO: I'll have to commit metadata.pt to the repo
         # Select the top and bottom stocks
-        top_stocks_idx = forecast.topk(long_count).indices
-        top_stocks_names = ...  # TODO: get the names of the top stocks
-        bottom_stocks_idx = (-1*forecast).topk(short_count).indices
-        bottom_stocks_names = ...  # TODO: get the names of the top stocks
-        top_stocks = pd.DataFrame(
+        # TODO: idea modify weights so that it uses the confidence of the prediction
+        # to determine the weight of the stock
+        if long_count > 0:
+            top_stocks_idx = np.argsort(forecast, axis=0)[-long_count:]
+            top_stocks_names = ticker_idx[top_stocks_idx]
+            top_stocks = pd.DataFrame(
             {'ticker': top_stocks_names, 'weights': 1, 'date': t, 'position': 'long'})
-        bottom_stocks = pd.DataFrame(
-            {'ticker': bottom_stocks_names, 'weights': 1, 'date': t, 'position': 'short'})
-        weights_df = pd.concat([top_stocks, bottom_stocks], axis=0)
+        else:
+            top_stocks = pd.DataFrame(columns=['ticker', 'weights', 'date', 'position'])
+        if short_count > 0:
+            bottom_stocks_idx = np.argsort(forecast, axis=0)[:short_count]
+            bottom_stocks_names = ticker_idx[bottom_stocks_idx]
+            bottom_stocks = pd.DataFrame(
+                {'ticker': bottom_stocks_names, 'weights': 1, 'date': t, 'position': 'short'})
+        else:
+            bottom_stocks = pd.DataFrame(columns=['ticker', 'weights', 'date', 'position'])
+        weights_df = pd.concat([top_stocks, bottom_stocks], axis=0).reset_index(drop=True)
         
         # Normalize the weights
         weights_df['weights'] = weights_df['weights'] / \
             weights_df['weights'].abs().sum()  
         
         # return a dataframe with the columns date, ticker, weights and position
-        return weights.to_frame().T
+        return weights_df
