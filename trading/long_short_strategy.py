@@ -50,16 +50,16 @@ class LongShortStrategy(StrategyInterface):
             top_stocks_idx = np.argsort(forecast, axis=0)[-long_count:]
             top_stocks_names = ticker_idx[top_stocks_idx]
             top_stocks = pd.DataFrame(
-            {'ticker': top_stocks_names, 'weights': 1, 'date': t, 'position': 'long'})
+            {'ticker': top_stocks_names, 'weights': 1, 'date': t, 'position': 'long', 'idx': top_stocks_idx})
         else:
-            top_stocks = pd.DataFrame(columns=['ticker', 'weights', 'date', 'position'])
+            top_stocks = pd.DataFrame(columns=['ticker', 'weights', 'date', 'position', 'idx'])
         if short_count > 0:
             bottom_stocks_idx = np.argsort(forecast, axis=0)[:short_count]
             bottom_stocks_names = ticker_idx[bottom_stocks_idx]
             bottom_stocks = pd.DataFrame(
-                {'ticker': bottom_stocks_names, 'weights': 1, 'date': t, 'position': 'short'})
+                {'ticker': bottom_stocks_names, 'weights': 1, 'date': t, 'position': 'short', 'idx': bottom_stocks_idx})
         else:
-            bottom_stocks = pd.DataFrame(columns=['ticker', 'weights', 'date', 'position'])
+            bottom_stocks = pd.DataFrame(columns=['ticker', 'weights', 'date', 'position', 'idx'])
         weights_df = pd.concat([top_stocks, bottom_stocks], axis=0).reset_index(drop=True)
         
         # Normalize the weights

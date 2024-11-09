@@ -10,8 +10,8 @@ from simulator.strategy_interface import StrategyInterface
 def strategy_simulator(
     path: str, 
     strategy: StrategyInterface,
-    return_list: list[torch.Tensor], 
-    forecast: list[torch.Tensor],
+    returns_ts: torch.Tensor, 
+    forecast_ts: torch.Tensor,
     t: int,
     ret_port: pd.Series, 
     weights_db: pd.DataFrame, 
@@ -23,8 +23,8 @@ def strategy_simulator(
     Args:
         path (string): path to save strategy data
         strategy (StrategyInterface): Strategy according to the StrategyInterface
-        return_list (list[torch.Tensor]): list of tensors with returns for each stock.
-        forecast (list[torch.Tensor]): predictions for each stock.
+        returns_ts (torch.Tensor): returns for each stock.
+        forecast_ts (torch.Tensor): predictions for each stock.
         t (int): Time value for calculation.
         ret_port (pd.Series): Accumulated portfolio returns.
         weights_db (pd.DataFrame): Accumulated weights database.
@@ -42,13 +42,15 @@ def strategy_simulator(
     weights_db = pd.concat([weights_db, weights], axis=0)
     weights_db.to_parquet(path + "weights_db.parquet")
 
-    # Calculate and save portfolio returns TODO: adjust to use column variacaopercent from data
-    prices = data['stocks']
-    prices_1 = prices[weights.ticker].loc[prices.index[t - 1:t + 1]] 
-    returns_1 = np.log(prices_1).diff().tail(1).mean() # TODO: modify this to allow for short positions
-    weights_index = weights.weights
-    weights_index.index = weights.ticker
-    ret_port[prices.index[t]] = returns_1 @ weights_index
+    # Calculate the portfolio returns for the specified t value
+    weights['returns'] = returns_ts[weights['idx'].values].numpy()
+    weights.loc[weights['position'] == 'short', 'returns'] *= -1
+    weights['returns'] *= weights['weights']
+    
+    # Get date from metadata
+    timestamp_idx = {v: k for k, v in metadata['timestamp_idx'].items()} # TODO: I'll have to commit metadata.pt to the repo
+    date = timestamp_idx[t]
+    ret_port[date] = weights['returns'].sum()
 
     # Save the portfolio returns
     aux = ret_port.reset_index()

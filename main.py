@@ -77,8 +77,8 @@ def main():
         ret_port, weights_db = strategy_simulator(
             path='results/',
             strategy=strategy,
-            forecast=all_predictions[t],
-            return_list=return_list[t],
+            forecast_ts=all_predictions[t],
+            returns_ts=return_list[t],
             t=t,
             ret_port=ret_port,
             weights_db=weights_db
