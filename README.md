@@ -40,24 +40,29 @@ docker build -t long-short-trader .
 
 
 ## Usage 
-1. Run the Docker container:
+Run the Docker container:
 ```bash
 docker run -it -v /data:/data long-short-trader
 ```
-2. To run the ingestion script:
+
+*Note*: The first time you run the container, you will need to run the data ingestion script to retrieve the data from the API and preprocess it for modeling. It will also train the model before running the trading simulation.
+The next time you run the container, you can skip the data ingestion step and run the trading simulation directly. But you can always run the data ingestion script to update the data and retrain the model.
+
+To run the data ingestion script:
 ```bash
 ./scripts/run_ingestion.sh
 ```
 
-3. To train the model:
+To run the training script:
 ```bash
 ./scripts/run_training.sh
 ```
 
-4. To run the trading simulation:
+To run the trading simulation:
 ```bash
 ./scripts/run_simulation.sh
 ```
+
 
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
