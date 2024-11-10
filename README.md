@@ -30,11 +30,10 @@ username: your_username
 password: your_password
 ```
 
-2.a [Optional]
-Modify the `config/config.yml` file to adjust the hyperparameters for training the model.
+3. *[Optional]* Modify the `config/config.yml` file to adjust the hyperparameters for training the model.
 
 
-3. Build the Docker container:
+4. Build the Docker container:
 ```bash
 docker build -t long-short-trader .
 ```
