@@ -3,9 +3,9 @@
 Big Buckets
 A. [X] Get data
 B. [X] Create model
-C. [ ] Train model
-D. [ ] Test model
-E. [ ] Implement strategy
+C. [X] Train model
+D. [X] Test model
+E. [X] Implement strategy
 F. [ ] Write article
 
 
@@ -26,28 +26,28 @@ B. Create model bucket
 
 C. Train model bucket
 [ X ] Split data into training and validation sets for sliding windows
-[   ] Implement early stopping/callbacks
-[   ] Train on historical data
-[   ] Save training checkpoints
-[   ] Log performance metrics during training (loss, accuracy)
-[   ] Fine-tune model hyperparameters (number of epochs, batch side)
+[ ? ] Implement early stopping/callbacks
+[ X ] Train on historical data
+[ X ] Save training checkpoints
+[ X ] Log performance metrics during training (loss, accuracy)
+[ ? ] Fine-tune model hyperparameters (number of epochs, batch side)
 
 D. Test model bucket
-[   ] Evaluate on test set (ensure no data leakage)
-[   ] Visualize prediction vs. actuals
-[   ] Measure performance (accuracy, MSE)
-[   ] Calculate trading returns based on model output
-[   ] Assess model robustness
+[ X ] Evaluate on test set (ensure no data leakage)
+[ X ] Visualize prediction vs. actuals
+[ X ] Measure performance (accuracy, MSE)
+[ X ] Calculate trading returns based on model output
+[ X ] Assess model robustness
 
 E. Implement strategy bucket
-[+/-] Define long short trading logic based on model predictions
-[+/-] Simulate trades with trading program
-[   ] Fine-tune strategy parameters (stop loss, take profit levels)
-[   ] Measure overall strategy performance (Sharpe ratio, max drawdown): tearsheet
+[ X ] Define long short trading logic based on model predictions
+[ X ] Simulate trades with trading scripts
+[ ? ] Fine-tune strategy parameters (stop loss, take profit levels)
+[ X ] Measure overall strategy performance (Sharpe ratio, max drawdown): tearsheet
 
 F. Write article bucket
-[+/-] Introduction to LSTM in stock trading
-[+/-] Write literature review
+[ X ] Introduction to LSTM in stock trading
+[ X ] Write literature review
 [+/-] Explain data source process
 [+/-] Explain model creation and key architectural choices
 [   ] Discuss model training challenges and tuning process
