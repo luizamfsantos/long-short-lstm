@@ -10,7 +10,7 @@
 - [Repository structure](#repository-structure)
 
 ## Introduction
-Long Short Trader is a project that aims to build a trading strategy using deep learning models. The project uses a Long Short Term Memory (LSTM) neural network to predict stock prices and generate trading signals. The trading strategy is implemented using a long-short approach, where the model predicts the future price of a stock and decides whether to buy or sell based on the predicted price.
+Long Short Trader is a project that aims to build a trading strategy using deep learning models. The project uses a Long Short Term Memory (LSTM) neural network to predict returns direction and generate trading signals. The trading strategy is implemented using a long-short approach, where the model predicts the direction of the stock price movement and takes a long position if the price is expected to increase and a short position if the price is expected to decrease.
 
 ## Features
 - Data ingestion: Retrieve historical stock data from an API and preprocess it for modeling
