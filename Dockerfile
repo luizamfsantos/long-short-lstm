@@ -10,9 +10,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-VOLUME /data
-
 # ensure the code is working before the simulation
 RUN ./scripts/run_tests.sh 
 
-CMD ["./scripts/run_simulation.sh"]
+ENTRYPOINT ["./scripts/entrypoint.sh"]

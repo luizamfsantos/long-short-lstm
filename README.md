@@ -42,7 +42,7 @@ docker build -t long-short-trader .
 ## Usage 
 1. Run the Docker container:
 ```bash
-docker run -it long-short-trader
+docker run -it -v /data:/data long-short-trader
 ```
 2. To run the ingestion script:
 ```bash
