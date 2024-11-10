@@ -39,18 +39,19 @@ def pipeline(
     # Get list of stocks being ingested
     stock_list = stock_list or get_stock_list()
     # Get data for each stock
-    market_data_list, fundamentalist_data_list = zip(*[
-        process_stock(start_time,
+    market_data_list = []
+    fundamentalist_data_list =  []
+    for ticker in stock_list:
+        market_data, fundamentalist_data = \
+            process_stock(start_time,
                       end_time,
                       ticker,
                       config,
                       save_raw_data,
                       path_to_save_raw_data)
-        for ticker in stock_list])
-    # Filter out None values
-    market_data_list = [data for data in market_data_list if data]
-    fundamentalist_data_list = [
-        data for data in fundamentalist_data_list if data]
+        if market_data and fundamentalist_data:
+            market_data_list.append(market_data)
+            fundamentalist_data_list.append(fundamentalist_data)
     # Extract data from the API response
     market_data_list = extract_data_from_api_response(market_data_list)
     fundamentalist_data_list = \
