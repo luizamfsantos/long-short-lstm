@@ -1,8 +1,8 @@
 import argparse
 import json
-import sys
 import logging
 import pandas as pd
+from typing import Tuple
 from pathlib import Path, PosixPath
 import pyarrow as pa
 import pyarrow.parquet as pq
@@ -38,39 +38,62 @@ def pipeline(
     config = get_config(config_path)
     # Get list of stocks being ingested
     stock_list = stock_list or get_stock_list()
-    # Loop over stocks
-    market_data_list = []
-    fundamentalist_data_list = []
-    for ticker in stock_list:
-        logger.info(f'Processing data for {ticker}')
-        market_data, fundamentalist_data = process_raw_data(
-            start_time,
-            end_time,
-            ticker,
-            config,
-            save_raw_data,
-            path_to_save_raw_data
-        )
-        if market_data and fundamentalist_data:
-            market_data = market_data.dict()['tables']  # dict
-            market_data['ticker'] = ticker
-            market_data_list.append(market_data)
-            fundamentalist_data = fundamentalist_data.dict()['tables']
-            fundamentalist_data['ticker'] = ticker
-            fundamentalist_data_list.append(fundamentalist_data)
+    # Get data for each stock
+    market_data_list, fundamentalist_data_list =  \
+        [process_stock(start_time,
+                       end_time,
+                       ticker,
+                       config,
+                       save_raw_data,
+                       path_to_save_raw_data)
+         for ticker in stock_list]
+    # Filter out None values
+    market_data_list = [data for data in market_data_list if data]
+    fundamentalist_data_list = [
+        data for data in fundamentalist_data_list if data]
     # Extract data from the API response
     market_data_list = extract_data_from_api_response(market_data_list)
-    fundamentalist_data_list = extract_data_from_api_response(
-        fundamentalist_data_list)
+    fundamentalist_data_list = \
+        extract_data_from_api_response(fundamentalist_data_list)
     # Combine data by type
     market_data = combine_data(market_data_list)
     fundamentalist_data = combine_data(fundamentalist_data_list)
     # Save combined data
-    save_combined_data(market_data, path_to_save_combined_data, 'market')
+    save_combined_data(
+        market_data,
+        path_to_save_combined_data,
+        'market')
     save_combined_data(
         fundamentalist_data,
-        path_to_save_combined_data, 
+        path_to_save_combined_data,
         'fundamentalist')
+
+
+def process_stock(
+    start_time: str,
+    end_time: str,
+    ticker: str,
+    config: dict,
+    save_raw_data: bool,
+    path_to_save_raw_data: str | PosixPath
+) -> Tuple[dict | None, dict | None]:
+    logger.info(f'Processing data for {ticker}')
+    market_data, fundamentalist_data = process_raw_data(
+        start_time,
+        end_time,
+        ticker,
+        config,
+        save_raw_data,
+        path_to_save_raw_data
+    )
+    # We need both fundamentalist and market data to proceed
+    if market_data and fundamentalist_data:
+        market_data = market_data.dict()['tables']  # dict
+        market_data['ticker'] = ticker
+        fundamentalist_data = fundamentalist_data.dict()['tables']
+        fundamentalist_data['ticker'] = ticker
+        return market_data, fundamentalist_data
+    return None, None
 
 
 def extract_data_from_api_response(data_list: list[dict]) -> list[dict]:
