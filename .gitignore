@@ -20,5 +20,8 @@ results/**.parquet
 .vscode/
 .idea/
 
+# Ignore macOS system files
+.DS_Store
+
 # Ignore logs
 logs/**.log
