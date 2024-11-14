@@ -47,6 +47,7 @@ def strategy_simulator(
     weights['returns'] = returns_ts[weights['idx'].values.astype(int)].numpy()
     weights.loc[weights['position'] == 'short', 'returns'] *= -1
     weights['returns'] *= weights['weights']
+    weights['returns'] *= 0.01 # turn returns into float instead of percentage
     
     # Get date from metadata
     timestamp_idx = {v: k for k, v in metadata['timestamp_idx'].items()} # TODO: I'll have to commit metadata.pt to the repo
